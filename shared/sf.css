@@ -16,7 +16,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .search{position:relative;width:min(100%,560px)}
 .search input{width:100%;height:30px;border:1px solid var(--border);border-radius:15px;background:#f3f3f3;padding:0 12px 0 32px;font:inherit}
 .search__ic{position:absolute;left:11px;top:8px;color:#706e6b}
-.gh__right{display:flex;align-items:center;gap:6px;width:200px;justify-content:flex-end}
+.gh__right{display:flex;align-items:center;gap:6px;width:auto;flex:none;justify-content:flex-end}
 .gh__btn{width:28px;height:28px;border:1px solid var(--border);border-radius:50%;background:#fff;color:#706e6b;display:flex;align-items:center;justify-content:center}
 .avatar{width:28px;height:28px;border-radius:50%;background:#5867e8;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;margin-left:4px}
 /* nav */
@@ -141,3 +141,18 @@ button{font:inherit;color:inherit;cursor:pointer}
 .edot{display:inline-block;width:8px;height:8px;border-radius:2px;background:#06a59a;margin-left:5px;vertical-align:middle}
 .hide-prop .edot{display:none}
 .objicon--site{background:#e3447a}
+
+/* prototype annotation layer */
+.annsw{white-space:nowrap;display:inline-flex;align-items:center;gap:6px;height:28px;border:1px solid #c9c9c9;border-radius:15px;background:#fff;color:#181818;font:inherit;font-size:12px;padding:0 10px 0 6px;cursor:pointer;margin-right:6px}
+.annsw__t{width:24px;height:14px;border-radius:7px;background:#706e6b;position:relative;display:inline-block}
+.annsw__t:after{content:"";position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#fff;transition:left .15s}
+.annsw.is-on .annsw__t{background:#0176d3}.annsw.is-on .annsw__t:after{left:12px}
+.annsw:focus-visible,.rpchip:focus-visible{outline:2px solid #0176d3;outline-offset:2px}
+.rpchip{border:1px solid #8fd0e3;background:#e0f2f7;color:#014486;border-radius:12px;font:inherit;font-size:12px;padding:2px 10px;cursor:pointer}
+.rpcols{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rpcols h3{margin-bottom:4px}.rpcols ul{margin:0 0 0 16px}
+@media(max-width:700px){.rpcols{grid-template-columns:1fr}.annsw{font-size:0;gap:0}.annsw__t{margin:0}}
+/* distinct prototype layer: dashed accent + tint (only when annotations are on) */
+.ann-on .layer,.ann-on .card:has(> .card__head .badge--proposal),.ann-on .dropzone{outline:0}
+.ann-on .card:has(> .card__head .badge--proposal){border-style:dashed;border-color:#dd7a01;background:#fffdf6}
+.ann-off .qb,.ann-off .badge--proposal,.ann-off .badge--screen,.ann-off .badge--open,.ann-off .layer__h,.ann-off [data-ann],.ann-off .sel-note--ann,.ann-off #rpBtn,.ann-off #rpBox,.ann-off #storiesLink{display:none!important}
+.ann-off .layer{border:0;background:transparent;padding:0}

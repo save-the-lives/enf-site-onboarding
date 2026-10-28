@@ -214,7 +214,7 @@
     const tabs = cfg.tabs.map((t) => '<li class="nav__item' + (t.id === cfg.active ? ' is-active' : '') + '"><a href="' + t.href + '">' + t.label + '</a></li>').join('');
     return '<header class="gh"><div class="gh__left"><button class="gh__launcher" title="App Launcher" aria-label="App Launcher">' + icon('waffle', '', 20) + '</button></div>' +
       '<div class="gh__search"><div class="search">' + icon('search', 'search__ic', 14) + '<input id="gsearch" type="search" placeholder="Search Sites and more..." aria-label="Search"></div></div>' +
-      '<div class="gh__right"><button class="gh__btn" title="Favorites">' + icon('star', '', 16) + '</button><button class="gh__btn" title="Setup">' + icon('gear', '', 16) + '</button><button class="gh__btn" id="helpBtn" title="Help and guide" aria-label="Help and guide">' + icon('question', '', 16) + '</button><button class="gh__btn" title="Notifications">' + icon('bell', '', 16) + '</button><span class="avatar" title="Mock user">TP</span></div></header>' +
+      '<div class="gh__right"><button class="gh__btn" title="Favorites">' + icon('star', '', 16) + '</button><button class="gh__btn" title="Setup">' + icon('gear', '', 16) + '</button><button class="annsw" id="annBtn" role="switch" aria-checked="true" title="Show or hide prototype annotations (proposal and screenshot labels, question badges)"><span class="annsw__t"></span>Prototype annotations</button><button class="gh__btn" id="helpBtn" title="Help and guide" aria-label="Help and guide">' + icon('question', '', 16) + '</button><button class="gh__btn" title="Notifications">' + icon('bell', '', 16) + '</button><span class="avatar" title="Mock user">TP</span></div></header>' +
       '<nav class="nav"><div class="nav__app"><span class="nav__appicon">' + icon('camera', '', 16) + '</span><span class="nav__appname">CMCS <small>(mockup)</small></span></div><ul class="nav__list">' + tabs + '</ul></nav>';
   }
 
@@ -322,8 +322,8 @@
     const nav = $('.nav'); if (!nav) return;
     const b = document.createElement('div'); b.className = 'here';
     b.innerHTML = '<div class="here__row"><nav aria-label="Breadcrumb" class="here__crumbs">' + h.crumbs.map((c, i) => (c[1] ? '<a href="' + c[1] + '">' + esc(c[0]) + '</a>' : '<span class="here__cur" aria-current="page">' + esc(c[0]) + '</span>') + (i < h.crumbs.length - 1 ? ' <span class="here__sep">&rsaquo;</span> ' : '')).join('') + '</nav><span class="badge badge--cur">You are here</span><span style="flex:1"></span>' +
-      (h.what ? '<button class="link-btn" id="whatBtn" aria-expanded="false">What am I looking at?</button>' : '') + (h.crumbs.length > 1 ? '<a href="' + PAGE.hub + '" class="here__back">' + icon('arrowleft', '', 12) + ' Back to hub</a>' : '') + '</div>' +
-      (h.what ? '<div class="here__what" id="whatBox" hidden><p><strong>Purpose.</strong> ' + esc(h.what) + '</p><p><strong>Prefer this when.</strong> ' + esc(h.prefer) + '</p></div>' : '');
+      '<button class="rpchip" id="rpBtn" aria-expanded="false" aria-controls="rpBox">Real vs proposed on this screen</button>' + (h.what ? '<button class="link-btn" id="whatBtn" aria-expanded="false">What am I looking at?</button>' : '') + (h.crumbs.length > 1 ? '<a href="' + PAGE.hub + '" class="here__back">' + icon('arrowleft', '', 12) + ' Back to hub</a>' : '') + '</div>' +
+      '<div class="here__what rpbox" id="rpBox" hidden>' + rpHTML() + '</div>' + (h.what ? '<div class="here__what" id="whatBox" hidden><p><strong>Purpose.</strong> ' + esc(h.what) + '</p><p><strong>Prefer this when.</strong> ' + esc(h.prefer) + '</p></div>' : '');
     nav.after(b);
     const w = b.querySelector('#whatBtn'); if (w) { const box = b.querySelector('#whatBox'); const seen = (function () { try { return localStorage.getItem('enf-what-' + PAGE.id); } catch (e) { return null; } })(); if (!seen) { box.hidden = false; w.setAttribute('aria-expanded', 'true'); } w.onclick = () => { box.hidden = !box.hidden; w.setAttribute('aria-expanded', String(!box.hidden)); try { localStorage.setItem('enf-what-' + PAGE.id, '1'); } catch (e) {} }; }
   }
@@ -345,6 +345,38 @@
     show();
   }
   document.addEventListener('click', (e) => { if (e.target.closest('#helpBtn')) openHelp(); });
+
+
+  /* ---------- annotations toggle, real vs proposed ---------- */
+  const ANN_KEY = 'enf-d141-ann';
+  function annGet() { try { const q = new URLSearchParams(location.search).get('ann'); if (q === '0' || q === '1') return q === '1'; const v = localStorage.getItem(ANN_KEY); return v !== '0'; } catch (e) { return true; } }
+  function annSet(on) { try { localStorage.setItem(ANN_KEY, on ? '1' : '0'); } catch (e) { /* ignore */ } annApply(on); }
+  function annApply(on) {
+    document.documentElement.classList.toggle('ann-off', !on); document.documentElement.classList.toggle('ann-on', on);
+    const b = $('#annBtn'); if (b) { b.setAttribute('aria-checked', on ? 'true' : 'false'); b.classList.toggle('is-on', on); }
+    if (!on) { try { Companion.closePop(); } catch (e) { /* ignore */ } }
+  }
+  annApply(annGet());
+  const RP = {
+    v1: { real: ['Sites list: All Sites, New / Import / Printable View, live column order, d/m/yyyy dates', 'Record header actions and highlights; tabs; Site Location, Site Details, Site Coordinates; right rail with Maintenance Cases, Certificates, Lanes, Program and Devices, amber banners', 'Existing Status values and Site Types seen'], prop: [['Lifecycle Path, stage sections and Mark Status as Complete (not on the live page)', 'backlog/index.html#US-009'], ['Activity Type, record type picker, D141 columns with no obvious live field', 'model/index.html'], ['Required checklist, attachment groups and Upload Files', 'backlog/index.html#US-013'], ['Whether record types exist on Site', 'questions/index.html#Q-027']] },
+    v2: { real: ['Same Site fields and picklists as the live Site', 'Status values as on the live Sites list'], prop: [['Editable grid, bulk action bar and per-cell validation', 'backlog/index.html#US-020'], ['Bulk Decommission outcomes mapped to existing Status values', 'questions/index.html#Q-017'], ['Child record counts and readiness per row', 'backlog/index.html#US-030']] },
+    v3: { real: ['Fields and child objects (Lane, Camera Program, Enforcement Device, Certificate) as on the live model'], prop: [['Screen Flow style wizard that creates the Site and its children', 'backlog/index.html#US-022'], ['Step order and grouping', 'questions/index.html']] },
+    hub: { real: ['Nothing here is Salesforce: it is the prototype index'], prop: [['All variations are proposals for the owner to compare', 'index.html']] },
+    st: { real: ['Stories marked Owner-supplied (screenshot) come from the live pages'], prop: [['All other stories and acceptance criteria are proposals', 'backlog/index.html']] },
+    jr: { real: ['Nothing is real here: step names are proposed, to confirm'], prop: [['Stage names and order', 'questions/index.html#Q-005']] },
+    q: { real: ['Nothing is real here: these are things to confirm'], prop: [['Every assumption is a proposal until answered', 'questions/index.html']] },
+    model: { real: ['Live objects and fields seen in the owner screenshots (Site, Lane, Camera Program, Enforcement Device, Certificate)'], prop: [['Every D141 column mapping is "To confirm"', 'questions/index.html#Q-016'], ['Option A (record types) vs Option B (program on Camera Program)', 'questions/index.html#Q-027']] }
+  };
+  function rpHTML() {
+    const d = RP[PAGE.id] || { real: ['See the legend in the Help drawer.'], prop: [] }, r = PAGE.root || '';
+    return '<div class="rpcols"><div><h3><span class="badge badge--screen">Real / owner-supplied</span></h3><ul>' + d.real.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul></div><div><h3><span class="badge badge--proposal">Proposal</span></h3><ul>' + d.prop.map((x) => '<li>' + esc(x[0]) + (x[1] ? ' <a href="' + r + x[1] + '">story or question</a>' : '') + '</li>').join('') + '</ul></div></div><p class="sel-note"><button class="link-btn" data-legend>Open the legend</button> for colours and shapes.</p>';
+  }
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#annBtn')) { annSet(document.documentElement.classList.contains('ann-off')); return; }
+    const rb = e.target.closest('#rpBtn'); if (rb) { const bx = $('#rpBox'); bx.hidden = !bx.hidden; rb.setAttribute('aria-expanded', bx.hidden ? 'false' : 'true'); return; }
+    if (e.target.closest('[data-legend]')) { openHelp(); const l = $('#drawer .legend'); if (l) { l.scrollIntoView(); l.setAttribute('tabindex', '-1'); l.focus(); } }
+  });
+  window.addEventListener('DOMContentLoaded', () => annApply(annGet()));
 
   window.Core = { $, $$, esc, isEmpty, icon, fmtDate, fmtDateTime, checkChild, childProblems, store, check, validateAll, applicable, reqKeys, alwaysReq, union, currentStage, toast, modal, closeModal, startTour, openHelp, chrome, footer, openDrawer, closeDrawer, fmap, NSW };
 })();
