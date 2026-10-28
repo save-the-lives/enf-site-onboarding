@@ -136,3 +136,4 @@ button{font:inherit;color:inherit;cursor:pointer}
 .legend li{display:flex;gap:8px;align-items:center;list-style:none;margin-left:-18px}
 .start{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:900px){.start{grid-template-columns:1fr}}
 .start ol{padding-left:18px;list-style:decimal}.start li{margin-bottom:6px}
+@media(max-width:700px){.mockbar{overflow-x:auto;white-space:nowrap;gap:12px}.gh__left,.gh__right{width:auto}.nav__app{min-width:0}.lv-meta{flex-wrap:wrap}}
