@@ -8,7 +8,7 @@
   function dataFor(j) {
     if (j.data) return j.data;
     const st = D.stages(rt).filter((s) => s.id === j.rec)[0]; if (!st) return [];
-    const ks = (D.STAGE_REQ[j.rec] || []).concat(st.dates); if (j.rec === 'd064') ks.push('szAmStart', 'szAmEnd', 'szPmStart', 'szPmEnd');
+    const need = D.childReq(rt, j.rec); const child = []; if (need.lane) child.push('Lane records (at least ' + need.lane + ')'); if (need.program) child.push('Camera Program record'); (need.device || []).forEach((t) => child.push('Enforcement Device: ' + t)); (need.cert || []).forEach((t) => child.push('Certificate: ' + t)); const ks = (D.STAGE_REQ[j.rec] || []).concat(st.dates); if (j.rec === 'd064') ks.push('szAmStart', 'szAmEnd', 'szPmStart', 'szPmEnd');
     const ok = new Set(D.fieldsFor(rt).map((f) => f.k)); return ks.filter((k) => ok.has(k)).map((k) => C.fmap[k].l);
   }
   function attFor(j) { if (j.rec) { const st = D.stages(rt).filter((s) => s.id === j.rec)[0]; return st ? st.att : []; } return j.attach; }

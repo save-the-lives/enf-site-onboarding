@@ -7,7 +7,7 @@
 <main class="page">
   <div class="pagehead"><span class="objicon" id="hubicon"></span><div style="flex:1"><div class="sub">D141 Site Setup</div><h1>Prototype hub</h1></div><span class="badge badge--proposal">Mockup only - fake data - Proposal unless owner-stated</span></div>
   <div class="card"><div class="card__body">
-    <p>Capturing D141 camera site data directly in Salesforce (CMCS) with validation at the point of entry, instead of an Excel form that is re-keyed. The spreadsheet layout does not have to be copied: the outcome is validated, complete site details feeding CMCS. Each variation below is a separate, Lightning-styled prototype of the same data model (five record types: FDSC, RLSC, BPES, ASC, ODES).</p>
+    <p>Capturing D141 camera site data directly in Salesforce (CMCS), extending the existing Site object and its child records with validation at the point of entry, instead of an Excel form that is re-keyed. The spreadsheet layout does not have to be copied: the outcome is validated, complete site details feeding CMCS. Each variation below is a separate, Lightning-styled prototype of the same data model (five record types: FDSC, RLSC, BPES, ASC, ODES).</p>
   </div></div>
   <div class="card" id="starthere"><div class="card__head"><h2>Start here</h2><span class="badge badge--cur">2-minute walkthrough</span><button class="btn btn--sm" id="tourBtn">Take the tour</button></div><div class="card__body start">
     <div><h3 style="font-size:14px;margin-bottom:6px">What this is</h3><p>Technical Project Managers fill an Excel D141 for every camera site, and another business unit re-keys it into CMCS. These prototypes show how the same data could be captured directly in Salesforce, with validation at the point of entry. It is a <strong>mockup with fake data</strong> for the Salesforce build team; nothing is built in Salesforce.</p>
@@ -38,6 +38,7 @@
   </div>
   <h2 style="margin:16px 0 8px;font-size:16px">Companion layer</h2>
   <div class="tiles">
+    <a class="tile" href="model/index.html"><h3>Data model <span class="badge badge--screen">Owner-supplied (screenshot)</span></h3><p>The live Site object and its child records (Lanes, Camera Programs, Enforcement Devices, Certificates), and a mapping of every D141 column to the likely live field. Start here if you are on the Salesforce team.</p></a>
     <a class="tile" href="backlog/index.html"><h3>User stories</h3><p>Living backlog with Given/When/Then acceptance criteria, linked to screens, fields and stages. Excel export.</p></a>
     <a class="tile" href="journey/index.html"><h3>User journey</h3><p>Site identified to enforcement live, with decommission and refurbish branches. Proposed stage names, to confirm.</p></a>
     <a class="tile" href="questions/index.html"><h3>Open questions</h3><p>Index of questions; each also appears in context at the field, stage, story or journey step it concerns.</p></a>
@@ -45,7 +46,7 @@
 </main>
 <script src="shared/data.js"></script><script src="shared/core.js"></script>
 <script>
-document.getElementById('top').innerHTML = Core.chrome({active:'hub',tabs:[{id:'hub',label:'Prototype hub',href:'index.html'},{id:'v1',label:'1 Record page',href:'v1-record-page/index.html'},{id:'v2',label:'2 Bulk grid',href:'v2-bulk-grid/index.html'},{id:'v3',label:'3 Guided flow',href:'v3-guided-flow/index.html'},{id:'st',label:'Stories',href:'backlog/index.html'},{id:'jr',label:'Journey',href:'journey/index.html'},{id:'q',label:'Questions',href:'questions/index.html'}]});
+document.getElementById('top').innerHTML = Core.chrome({active:'hub',tabs:[{id:'hub',label:'Prototype hub',href:'index.html'},{id:'v1',label:'1 Record page',href:'v1-record-page/index.html'},{id:'v2',label:'2 Bulk grid',href:'v2-bulk-grid/index.html'},{id:'v3',label:'3 Guided flow',href:'v3-guided-flow/index.html'},{id:'model',label:'Data model',href:'model/index.html'},{id:'st',label:'Stories',href:'backlog/index.html'},{id:'jr',label:'Journey',href:'journey/index.html'},{id:'q',label:'Questions',href:'questions/index.html'}]});
 document.getElementById('hubicon').innerHTML = Core.icon('camera','',18);
 Core.footer({variation:'Hub',id:'hub',hub:'index.html',note:'Hub of prototype variations. All are proposals.',tourAuto:true,
   here:{crumbs:[['Prototype hub']],what:'The entry point: what the prototype is for, three ways to capture site data, and a companion layer of stories, journey and questions.',prefer:'You are new here. Start with the Start here panel.'},

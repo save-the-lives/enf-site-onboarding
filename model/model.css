@@ -1,0 +1,6 @@
+.erd{display:grid;grid-template-columns:minmax(260px,1fr) 2fr;gap:16px;align-items:start}
+@media(max-width:900px){.erd{grid-template-columns:1fr}}
+.erd__kids{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative}
+.ebox{border:1px solid #c9c9c9;border-radius:4px;background:#fff;padding:10px 12px}
+.ebox h3{font-size:13px;margin-bottom:6px}.ebox ul{list-style:disc;padding-left:18px}.ebox li{margin-bottom:3px}
+.ebox.site{border-color:#e3447a;border-width:2px}.ebox.kid{border-left:4px solid #0176d3}.ebox.grey{background:#f3f3f3;border-left-color:#999}

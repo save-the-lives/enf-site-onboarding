@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Data model - D141 Site Setup</title>
+<link rel="stylesheet" href="../shared/sf.css"><link rel="stylesheet" href="model.css">
+</head><body>
+<div id="top"></div>
+<main class="page" id="main">
+  <div class="pagehead"><span class="objicon objicon--site" id="oi"></span><div style="flex:1"><div class="sub">D141 Site Setup</div><h1>Data model: Site and child records</h1></div><span class="badge badge--screen">Structure: owner-supplied (screenshot)</span><span class="badge badge--proposal">Mapping: Proposal - to confirm</span></div>
+  <div class="card"><div class="card__body"><p>The live CMCS already has a <strong>Site</strong> object with child objects (Lanes, Camera Programs, Enforcement Devices, Certificates, Maintenance Cases, Delegations, Sessions). So the D141 should probably be captured as a Site plus child records, and only the <em>missing</em> columns added. This page shows that structure and maps every D141 column to the likely live field. Every row is <strong>To confirm</strong>: the mapping is inferred from two screenshots, not from CMCS metadata. <span id="qs"></span></p></div></div>
+  <div class="card"><div class="card__head"><h2>Site and its children (as assumed in this mockup)</h2></div><div class="card__body"><div class="erd" id="erd"></div></div></div>
+  <div class="card"><div class="card__head"><h2>Where does the program live? Two options</h2></div><div class="card__body grid2" id="opts"></div></div>
+  <div class="card"><div class="card__head"><h2>Every D141 column to likely live object.field</h2><label class="sel-note">Show <select id="flt"><option value="">all</option><option value="seen">seen on live page</option><option value="likely">likely</option><option value="unknown">unknown</option><option value="missing">appears missing</option></select></label></div><table class="tbl" id="map"></table></div>
+  <div class="card"><div class="card__head"><h2>On the live page but not in the D141</h2></div><table class="tbl" id="live"></table></div>
+</main>
+<script src="../shared/data.js"></script><script src="../shared/core.js"></script><script src="../shared/backlog.js"></script><script src="../shared/companion.js"></script><script src="../shared/model.js"></script><script src="../shared/pages.js"></script>
+<script>
+(function () {
+  pageShell('model', 'Data model', 'Site plus child records (Lanes, Camera Program, Enforcement Devices, Certificates) and a mapping of every D141 column to the likely live field.');
+  document.getElementById('oi').innerHTML = Core.icon('building', '', 18);
+  const esc = Core.esc, M = MODEL;
+  document.getElementById('qs').innerHTML = Companion.qbadges({ model: 'all' });
+  const box = (cls, title, tag, rows) => '<div class="ebox ' + cls + '"><h3>' + title + ' <span class="badge ' + (tag === 'Proposal' ? 'badge--proposal' : 'badge--screen') + '">' + tag + '</span></h3><ul>' + rows.map((r) => '<li>' + r + '</li>').join('') + '</ul></div>';
+  const siteRows = ['Site No, Site Type, Status, Region, Zone, Location (formula)', 'Site Address, Approx. Location, Road Number, Cross Street, Other Cross, Suburb', 'Vendor (lookup), Vendor Managed, LGA, Nearest Local Court', 'Speed Limit, Sensor Type, 2nd Verification, Flash Type, s138 checkbox', 'Camera GPS Coordinates, Road Side Cabinet Coordinates', 'Directions Monitored'];
+  document.getElementById('erd').innerHTML = '<div class="erd__site">' + box('site', 'Site (existing)', 'Owner-supplied (screenshot)', siteRows.concat(['<span class="badge badge--proposal">Proposed new fields</span> Activity Type, lifecycle dates, Monitoring, school zone, UBD, SPD coordinates, TIRTL, Multi Aspect, Variable Speed Limit, TCS ID, Avoidance, Network fields'])) + '</div><div class="erd__kids">' +
+    box('kid', 'Lane (child, existing)', 'Owner-supplied (screenshot)', ['Lane Number (assumed)', 'Status (Inactive seen)', 'Enforcement Types (Red Light seen)', 'Lane Configuration']) +
+    box('kid', 'Camera Program (child, existing)', 'Owner-supplied (screenshot)', ['System Type (Red Light Camera seen)', 'Sub Type (RLC-WetFilm seen)', 'Warranty Expiry']) +
+    box('kid', 'Enforcement Device (child, existing)', 'Owner-supplied (screenshot)', ['Fields not seen. Assumed: Device Type (CRD, SMD, DMD), Model, Serial Number']) +
+    box('kid', 'Certificate (child, existing)', 'Owner-supplied (screenshot)', ['Fields not seen. Assumed: Certificate Type (S137, S138, S137A as labels), date']) +
+    box('kid grey', 'Maintenance Case, Delegation, Session', 'Owner-supplied (screenshot)', ['On the live page; not used for D141 capture (Q-028)']) + '</div>';
+  document.getElementById('opts').innerHTML = '<div class="ebox"><h3>Option A (used in the mockup): record types on Site <span class="badge badge--proposal">Proposal</span></h3><p>Five record types (FDSC, RLSC, BPES, ASC, ODES) on Site drive page layout. Camera Program holds System Type and warranty. Simple for TPMs; needs record types to be acceptable on the existing Site object.</p></div><div class="ebox"><h3>Option B: program = Camera Program System Type <span class="badge badge--proposal">Proposal</span></h3><p>No record types. The program is the Camera Program child\'s System Type; layouts use dynamic forms or components that show fields by System Type. Fits the live model if record types are not used today. ' + Companion.qbadges({ screen: 'new' }) + '</p></div>';
+  const lab = { seen: ['Seen on live page', 'badge--screen'], likely: ['Likely exists', 'badge--cur'], unknown: ['Unknown', ''], missing: ['Appears missing', 'badge--open'] };
+  const flt = document.getElementById('flt');
+  function map() {
+    const rows = M.MAP.filter((r) => !flt.value || r.status === flt.value);
+    document.getElementById('map').innerHTML = '<thead><tr><th>D141 column</th><th>Live object</th><th>Live field</th><th>Status (all To confirm)</th><th>Note</th><th>Open</th></tr></thead><tbody>' + rows.map((r, i) => '<tr><td><strong>' + esc(r.d141) + '</strong></td><td>' + esc(r.obj) + '</td><td>' + esc(r.field) + '</td><td><span class="badge ' + lab[r.status][1] + '">' + lab[r.status][0] + '</span> <span class="badge badge--proposal">To confirm</span></td><td>' + esc(r.note) + (r.q ? ' ' + Companion.badge(BL.QUESTIONS.filter((q) => q.id === r.q)[0]) : '') + '</td><td>' + (r.key ? '<a href="' + BL.href({ t: 'record', rt: 'FDSC', field: r.key }, '../') + '">Field on record</a>' : r.obj.indexOf('Site') < 0 ? '<a href="' + BL.href({ t: 'record', rt: 'FDSC', id: 's1' }, '../') + '">Record page</a>' : '') + '</td></tr>').join('') + '</tbody>';
+    const c = {}; M.MAP.forEach((r) => (c[r.status] = (c[r.status] || 0) + 1));
+    document.getElementById('flt').title = Object.keys(c).map((k) => lab[k][0] + ': ' + c[k]).join(', ');
+  }
+  flt.onchange = map; map();
+  document.getElementById('live').innerHTML = '<thead><tr><th>Object</th><th>Field(s)</th><th>Note</th></tr></thead><tbody>' + M.LIVE_ONLY.map((r) => '<tr><td>' + r[0] + '</td><td>' + esc(r[1]) + '</td><td>' + esc(r[2]) + (r[3] ? ' ' + Companion.badge(BL.QUESTIONS.filter((q) => q.id === r[3])[0]) : '') + '</td></tr>').join('') + '</tbody>';
+})();
+</script>
+</body></html>

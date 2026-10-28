@@ -137,3 +137,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .start{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:900px){.start{grid-template-columns:1fr}}
 .start ol{padding-left:18px;list-style:decimal}.start li{margin-bottom:6px}
 @media(max-width:700px){.mockbar{overflow-x:auto;white-space:nowrap;gap:12px}.gh__left,.gh__right{width:auto}.nav__app{min-width:0}.lv-meta{flex-wrap:wrap}}
+.badge--screen{background:#e0f2f7;color:#014486;border:1px solid #8fd0e3}
+.edot{display:inline-block;width:8px;height:8px;border-radius:2px;background:#06a59a;margin-left:5px;vertical-align:middle}
+.hide-prop .edot{display:none}
+.objicon--site{background:#e3447a}

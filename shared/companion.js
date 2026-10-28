@@ -11,12 +11,20 @@
   function qbadges(at) { return BL.qFor(at).map(badge).join(''); }
 
   function chip(label, href) { return '<a class="chip" href="' + href + '">' + esc(label) + '</a>'; }
-  function contextChips(q) {
-    const out = [], at = q.at, p = q.primary || {};
-    (at.field || []).forEach((k) => out.push(chip('Field: ' + (Core.fmap[k] || {}).l, BL.href({ t: 'record', rt: p.rt || 'FDSC', stage: p.stage, field: k, q: q.id }, BASE))));
-    (at.stage || []).forEach((s) => out.push(chip('Stage: ' + BL.STAGE_NAME[s], BL.href({ t: 'record', rt: p.rt || 'FDSC', stage: s, q: q.id }, BASE))));
-    (at.story || []).forEach((s) => out.push(chip('Story ' + s, BL.href({ t: 'story', id: s, q: q.id }, BASE))));
-    (at.journey || []).forEach((s) => { const j = BL.JOURNEY.filter((x) => x.id === s)[0]; out.push(chip('Journey: ' + (j ? j.name : 'stage order'), BL.href({ t: 'journey', step: j ? s : 'planned', q: q.id }, BASE))); });
+  function contextChips(q, base) {
+    base = base == null ? BASE : base;
+    const out = [], at = q.at, p = q.primary || {}; const rt = p.rt || 'FDSC';
+    (at.field || []).forEach((k) => out.push(chip('Field: ' + (Core.fmap[k] || {}).l, BL.href({ t: 'record', rt: rt, stage: p.stage, field: k, q: q.id }, base))));
+    (at.stage || []).forEach((s) => out.push(chip('Stage: ' + BL.STAGE_NAME[s], BL.href({ t: 'record', rt: rt, stage: s, q: q.id }, base))));
+    (at.col || []).forEach((c) => out.push(chip('List column: ' + c, BL.href({ t: 'list', q: q.id }, base))));
+    (at.screen || []).forEach((c) => out.push(chip('Screen: ' + (c === 'new' ? 'New Site modal' : c === 'list' ? 'Sites list' : c), BL.href({ t: c === 'new' ? 'new' : 'list', q: q.id }, base))));
+    (at.sec || []).forEach((c) => out.push(chip('Section: ' + c, BL.href({ t: 'record', rt: rt, q: q.id }, base))));
+    (at.child || []).forEach((c) => out.push(chip('Related list: ' + c, BL.href({ t: 'record', rt: rt, id: 's1', q: q.id }, base))));
+    (at.banner || []).forEach((c) => out.push(chip('Banner: add ' + c, BL.href({ t: 'record', rt: 'RLSC', id: 's3', q: q.id }, base))));
+    (at.tab || []).forEach((c) => out.push(chip('Tab: ' + c, BL.href({ t: 'record', rt: rt, tab: c, q: q.id }, base))));
+    (at.model || []).forEach(() => out.push(chip('Data model page', BL.href({ t: 'model', q: q.id }, base))));
+    (at.story || []).forEach((s) => out.push(chip('Story ' + s, BL.href({ t: 'story', id: s, q: q.id }, base))));
+    (at.journey || []).forEach((s) => { const j = BL.JOURNEY.filter((x) => x.id === s)[0]; out.push(chip('Journey: ' + (j ? j.name : 'stage order'), BL.href({ t: 'journey', step: j ? s : 'planned', q: q.id }, base))); });
     return out.join('');
   }
 
@@ -69,5 +77,5 @@
       document.body.appendChild(d); d.querySelector('[data-dclose]').onclick = Core.closeDrawer;
     };
   }
-  window.Companion = { qbadges, badge, init, storiesHTML, chip, closePop, setBase: (b) => (BASE = b) };
+  window.Companion = { contextChips, qbadges, badge, init, storiesHTML, chip, closePop, setBase: (b) => (BASE = b) };
 })();

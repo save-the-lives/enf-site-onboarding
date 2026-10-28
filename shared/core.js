@@ -26,6 +26,13 @@
     doc: 'M6 2h8l6 6v14H6V2zm7 1.5V9h5.5L13 3.5z',
     camera: 'M9 3L7.2 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9zm3 14a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z',
     delete: 'M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z',
+    building: 'M4 21V3h10v6h6v12h-7v-4h-2v4H4zm2-14v2h2V7H6zm0 4v2h2v-2H6zm0 4v2h2v-2H6zm4-8v2h2V7h-2zm0 4v2h2v-2h-2zm6 0v2h2v-2h-2zm0 4v2h2v-2h-2z',
+    table: 'M3 4h18v16H3V4zm2 2v3h6V6H5zm8 0v3h6V6h-6zM5 11v3h6v-3H5zm8 0v3h6v-3h-6zM5 16v2h6v-2H5zm8 0v2h6v-2h-6z',
+    refresh: 'M17.65 6.35A8 8 0 1 0 19.74 14h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z',
+    chart: 'M4 20V4h2v14h14v2H4zm4-4v-5h3v5H8zm5 0V8h3v8h-3zm5 0v-3h2v3h-2z',
+    filter: 'M3 5h18l-7 8v6l-4-2v-4L3 5z',
+    pin: 'M14 3l7 7-2 1-3-1-3.5 3.5.5 4-2 1-3-3-4.5 4.5-1-1L8.5 14l-3-3 1-2 4-.5L14 5l-1-3z',
+    listv: 'M3 5h18v2H3V5zm0 6h18v2H3v-2zm0 6h18v2H3v-2z',
     arrowleft: 'M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z'
   };
   function icon(n, cls, size) {
@@ -41,7 +48,7 @@
   const fmtDate = (s) => { if (!s) return ''; const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); return m ? m[3] + '/' + m[2] + '/' + m[1] : s; };
 
   /* ---------- store ---------- */
-  const KEY = 'enf-d141-mock-v2';
+  const KEY = 'enf-d141-mock-v3';
   const store = {
     load() { try { const j = localStorage.getItem(KEY); if (j) return JSON.parse(j); } catch (e) {} return D.seed(); },
     save(sites) { try { localStorage.setItem(KEY, JSON.stringify(sites)); } catch (e) {} },
@@ -53,14 +60,20 @@
   const IPV4 = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
   const NUM = /^-?\d+(\.\d+)?$/;
   const fmap = {}; D.F.forEach((f) => (fmap[f.k] = f));
+  const fmtDateTime = (iso) => { if (!iso) return ''; const d = new Date(iso); if (isNaN(d)) return ''; let h = d.getHours(); const m = String(d.getMinutes()).padStart(2, '0'); const ap = h >= 12 ? 'pm' : 'am'; h = h % 12 || 12; return d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear() + ', ' + h + ':' + m + ' ' + ap; };
 
-  function dateGroups(rt) { return D.stages(rt).map((s) => s.dates); }
+  /* date order groups: Installed, DBA, D064, D128, Certificates (child records), Warning, Infringing */
+  function dateGroups(rt) { const g = [['dInstalled'], ['dDBA'], ['dD064'], ['dD128'], ['#cert']]; if (rt !== 'ASC') g.push(['dWarn']); g.push(['dInf']); return g; }
+  const shortL = (l) => l.replace(/ Date.*$/, '');
+  function valsOf(k, v, certs) { return k === '#cert' ? (certs || []).map((c) => c.date).filter((x) => !isEmpty(x)) : (isEmpty(v[k]) ? [] : [v[k]]); }
+  const gname = (k) => (k === '#cert' ? 'Certificate' : shortL(fmap[k].l));
 
   function check(f, val, v, rt, ctx) {
     ctx = ctx || {};
     const enforce = ctx.enforce || new Set();
     const s = isEmpty(val) ? '' : String(val).trim();
     let err = '', warn = '';
+    if (f.t === 'bool' || f.t === 'formula') return { err, warn };
     if (s === '') {
       if (enforce.has(f.k)) err = f.sz ? 'Required when School Zone is Yes.' : 'Complete this field.';
       return { err, warn };
@@ -68,25 +81,25 @@
     if (f.max && s.length > f.max) return { err: 'Maximum ' + f.max + ' characters.', warn };
     switch (f.t) {
       case 'code':
-        if (!/^[A-Za-z0-9][A-Za-z0-9-]{2,19}$/.test(s)) err = 'Camera Code must be 3 to 20 characters: letters, numbers and hyphens only.';
-        else if ((ctx.sites || []).some((x) => x.id !== ctx.id && String(x.v.code || '').toLowerCase() === s.toLowerCase())) err = 'Duplicate value: another Site already has Camera Code ' + s + '.';
+        if (!/^(\d{4}|TEST-\d{4})$/.test(s)) err = 'Site No must be 4 digits, e.g. 0001 (the mockup also accepts TEST-0001 for fake data).';
+        else if ((ctx.sites || []).some((x) => x.id !== ctx.id && String(x.v.code || '').toLowerCase() === s.toLowerCase())) err = 'Duplicate value: another Site already has Site No ' + s + '.';
         break;
       case 'pick':
-        if (D.opts(f, rt).indexOf(s) < 0) err = 'Select a value from the list. "' + s + '" is not a valid option.';
+        if (D.opts(f, rt, v).indexOf(s) < 0) err = 'Select a value from the list. "' + s + '" is not a valid option.';
+        else if (f.k === 'status' && v.activity === 'Decommission' && s === 'Active') warn = 'Activity Type is Decommission but Status is Active. Decommissioned statuses are expected (Proposal).';
+        else if (f.k === 'status' && v.activity && v.activity !== 'Decommission' && /^Decommissioned/.test(s)) warn = 'Status is ' + s + ' but Activity Type is ' + v.activity + ' (Proposal).';
         break;
       case 'int':
         if (!/^\d+$/.test(s) || +s < 1 || +s > 99) err = 'Enter a whole number between 1 and 99.';
         break;
-      case 'lat': case 'lng': {
-        const isLat = f.t === 'lat', lim = isLat ? 90 : 180;
-        if (!NUM.test(s)) err = (isLat ? 'Latitude' : 'Longitude') + ' must be a decimal number, e.g. ' + (isLat ? '-33.8688' : '151.2093') + '.';
-        else if (Math.abs(+s) > lim) err = (isLat ? 'Latitude must be between -90 and 90.' : 'Longitude must be between -180 and 180.');
-        else {
-          const r = isLat ? NSW.lat : NSW.lng;
-          if (+s < r[0] || +s > r[1]) warn = 'Outside the usual NSW range (' + r[0] + ' to ' + r[1] + '). Check the sign and digits before saving.';
-          const m = /\.(\d+)$/.exec(s);
-          if (!warn && (!m || m[1].length < 4)) warn = 'Fewer than 4 decimal places. Is this precise enough? (Proposal)';
-        }
+      case 'latlng': {
+        const m = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/.exec(s);
+        if (!m) { err = 'Enter as "latitude, longitude", e.g. -33.8688, 151.2093.'; break; }
+        const la = +m[1], lo = +m[2];
+        if (Math.abs(la) > 90) err = 'Latitude must be between -90 and 90.';
+        else if (Math.abs(lo) > 180) err = 'Longitude must be between -180 and 180.';
+        else if (la < NSW.lat[0] || la > NSW.lat[1] || lo < NSW.lng[0] || lo > NSW.lng[1]) warn = 'Outside the usual NSW range (lat ' + NSW.lat[0] + ' to ' + NSW.lat[1] + ', long ' + NSW.lng[0] + ' to ' + NSW.lng[1] + '). Check the sign and digits before saving.';
+        else if (!/\.\d{4,}\s*,/.test(s) || !/\.\d{4,}\s*$/.test(s)) warn = 'Fewer than 4 decimal places. Is this precise enough? (Proposal)';
         break;
       }
       case 'ip':
@@ -95,11 +108,14 @@
       case 'date': {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || isNaN(Date.parse(s))) { err = 'Enter a valid date.'; break; }
         if (f.plain) break;
-        const groups = dateGroups(rt);
-        let gi = -1; groups.forEach((g, i) => { if (g.indexOf(f.k) >= 0) gi = i; });
+        const groups = dateGroups(rt); let gi = -1; groups.forEach((g, i) => { if (g.indexOf(f.k) >= 0) gi = i; });
+        if (gi < 0) break;
         let worst = null;
-        for (let i = 0; i < gi; i++) groups[i].forEach((pk) => { const pv = v[pk]; if (!isEmpty(pv) && pv > s && (!worst || pv > worst.d)) worst = { d: pv, k: pk }; });
-        if (worst) err = f.l.replace(/ Date.*$/, '') + ' date cannot be earlier than ' + fmap[worst.k].l.replace(/ Date.*$/, '') + ' (' + fmtDate(worst.d) + ').';
+        for (let i = 0; i < gi; i++) groups[i].forEach((pk) => valsOf(pk, v, ctx.certs).forEach((pv) => { if (pv > s && (!worst || pv > worst.d)) worst = { d: pv, k: pk }; }));
+        if (worst) { err = shortL(f.l) + ' date cannot be earlier than ' + gname(worst.k) + ' (' + fmtDate(worst.d) + ').'; break; }
+        let late = null;
+        for (let i = gi + 1; i < groups.length; i++) groups[i].forEach((pk) => valsOf(pk, v, ctx.certs).forEach((pv) => { if (pv < s && (!late || pv < late.d)) late = { d: pv, k: pk }; }));
+        if (late && !ctx.noLater) err = shortL(f.l) + ' date cannot be later than ' + gname(late.k) + ' (' + fmtDate(late.d) + ').';
         break;
       }
       case 'time':
@@ -112,7 +128,6 @@
   }
 
   function applicable(rt, v) { return D.fieldsFor(rt).filter((f) => !(f.sz && v.schoolZone !== 'Yes')); }
-
   function reqKeys(rt, stageId, v) {
     const st = D.stages(rt).filter((s) => s.id === stageId)[0];
     let ks = (D.STAGE_REQ[stageId] || []).slice();
@@ -123,11 +138,46 @@
   }
   function alwaysReq() { return new Set(D.ALWAYS_REQ); }
   function union(a, b) { const s = new Set(a); b.forEach((x) => s.add(x)); return s; }
-
   function validateAll(v, rt, ctx) {
     const errors = {}, warns = {};
     applicable(rt, v).forEach((f) => { const r = check(f, v[f.k], v, rt, ctx); if (r.err) errors[f.k] = r.err; if (r.warn) warns[f.k] = r.warn; });
     return { errors, warns };
+  }
+
+  /* ---- child records (Lane, Camera Program, Enforcement Device, Certificate) ---- */
+  function checkChild(kind, rec, site, enforce) {
+    const rt = site.rt, defs = D.CH[kind].fields, errs = {}; const sv = site.v;
+    defs.forEach((f) => {
+      const val = rec[f.k]; const empty = isEmpty(val);
+      if (empty) { if (f.req && enforce !== false) errs[f.k] = 'Complete this field.'; return; }
+      const r = check(Object.assign({}, f), val, rec, rt, { certs: site.certs, noLater: false });
+      if (r.err) errs[f.k] = r.err;
+    });
+    const arr = site[D.CHKEY[kind]] || [];
+    const others = arr.filter((x) => x.id !== rec.id);
+    if (kind === 'lane' && !errs.no && !isEmpty(rec.no) && others.some((x) => x.no === rec.no)) errs.no = 'Lane ' + rec.no + ' already exists on this Site.';
+    if (kind === 'device' && !errs.type && !isEmpty(rec.type) && others.some((x) => x.type === rec.type)) errs.type = 'This Site already has a ' + rec.type + ' (one per type - Proposal).';
+    if (kind === 'program' && others.length) errs.systemType = 'A Site has one Camera Program in this mockup (Proposal).';
+    if (kind === 'cert') {
+      if (!errs.type && !isEmpty(rec.type) && others.some((x) => x.type === rec.type)) errs.type = 'A ' + rec.type + ' Certificate already exists on this Site.';
+      if (!errs.date && !isEmpty(rec.date)) {
+        const d = rec.date;
+        if (!isEmpty(sv.dD128) && d < sv.dD128) errs.date = 'Certificate date cannot be earlier than D128 Network Commissioned (' + fmtDate(sv.dD128) + ').';
+        else if (!isEmpty(sv.dWarn) && d > sv.dWarn) errs.date = 'Certificate date cannot be later than Warning Letter Start (' + fmtDate(sv.dWarn) + ').';
+        else if (!isEmpty(sv.dInf) && d > sv.dInf) errs.date = 'Certificate date cannot be later than Infringing (' + fmtDate(sv.dInf) + ').';
+      }
+    }
+    return errs;
+  }
+  /* required child records for a stage; returns [{kind,msg}] */
+  function childProblems(site, stageId) {
+    const need = D.childReq(site.rt, stageId), out = [];
+    if (need.lane && (site.lanes || []).length < need.lane) out.push({ kind: 'lane', msg: 'Add at least ' + need.lane + ' Lane (a Site needs lane configuration).' });
+    if (need.program && (site.programs || []).length < need.program) out.push({ kind: 'program', msg: 'Add a Camera Program.' });
+    if (need.device) need.device.forEach((t) => { if (!(site.devices || []).some((d) => d.type === t)) out.push({ kind: 'device', msg: 'Add an Enforcement Device of type ' + t + '.' }); });
+    if (need.cert) need.cert.forEach((t) => { if (!(site.certs || []).some((c) => c.type === t)) out.push({ kind: 'cert', msg: 'Add a ' + t + ' Certificate.' }); });
+    Object.keys(D.CHKEY).forEach((kind) => (site[D.CHKEY[kind]] || []).forEach((rec) => { const e = checkChild(kind, rec, site, true); const m = Object.keys(e); if (m.length) out.push({ kind: kind, id: rec.id, msg: D.CH[kind].label + ' record has errors: ' + e[m[0]] }); }));
+    return out;
   }
 
   function currentStage(site) { const st = D.stages(site.rt); for (const s of st) if (site.done.indexOf(s.id) < 0) return s; return null; }
@@ -169,8 +219,18 @@
   }
 
   const NOTES = {
+    screenshot: [
+      'Site is an EXISTING object in CMCS: we extend it, we do not create it. Object icon is a pink building tile.',
+      'Sites list view: "All Sites"; buttons New, Import, Printable View; search; columns Site Number, Location, Status, Site Type, Vendor (lookup), Zone, Region, Created Date, Last Modified Date; row action menu; dates d/m/yyyy, h:mm am/pm.',
+      'Existing Status values: Active, Decommissioned, Decommissioned - Camera removed, Decommissioned - Camera upgraded. Existing Site Type values seen: Red Light Camera, MOB.',
+      'Site record page: actions Follow, Edit, New Maintenance Case, New Delegation, New Certificate, Log Session; highlights Suburb, Status, Site Type, Directions Monitored, Vendor; NO Path component today.',
+      'Tabs: Details, Additional Assets, Network, Site Survey, Files/Attachments, Site History, Edit History, All Cases.',
+      'Details sections: Site Location, Site Details, Site Coordinates (combined Lat, Long fields), more below.',
+      'Right rail: Open Maintenance Cases, Certificates, Lanes Configuration, Program & Devices (Camera Programs, Enforcement Devices) with amber "Please add Lane(s)." and "Please add Enforcement Device(s)." banners.',
+      'Live model already has child objects: Lanes, Camera Programs, Enforcement Devices, Certificates, Maintenance Cases, Delegations, Sessions.'
+    ],
     owner: [
-      'Five record types (programs): FDSC, RLSC, BPES, ASC, ODES; page layout fields differ per program.',
+      'Five camera programs (FDSC, RLSC, BPES, ASC, ODES) with different fields. (Whether these are record types on Site or Camera Program values is now an open question, Q-027.)',
       'Core fields and the program differences listed in the D141 template (owner-confirmed data model).',
       'Lifecycle dates as stages: Camera Installed, Data Block Approval, D064 Site Inspection, D128 Network Commissioned, Certification, Warning Letter Start (not ASC), Infringing.',
       'Certification dates: FDSC/RLSC S137 + S138; BPES/ASC S138 only; ODES S137A + S138. S137/S138 are labels only.',
@@ -189,7 +249,9 @@
       'Stages must be completed in order; reopening a stage reopens later ones.',
       'Decommission and Refurbish use the same stages as Commission.',
       'Three variations of the capture experience (record page, bulk grid, guided flow) are all proposals; the owner does not require the spreadsheet layout to be copied.',
-      'Mockup chrome: CMCS app name, tab names, list columns, sample data.'
+      'Mapping of each D141 column to a live Site/child field (see the Data model page); child records (Lane, Camera Program, Enforcement Device, Certificate) used for TPM entry.',
+      'Lifecycle Path, stage sections, attachments tab, Network tab content, Activity Type field: all layered on top of the live page.',
+      'Mockup chrome: CMCS app name, sample data, placeholder map.'
     ],
     open: [
       'Real unit manager list (who is notified when a site is saved or reaches a stage).',
@@ -202,7 +264,7 @@
   function notesHTML(extra) {
     const ul = (a) => '<ul>' + a.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>';
     return '<h3>This variation</h3><p>' + esc(extra || '') + '</p>' +
-      '<h3><span class="badge badge--owner">Owner-stated</span></h3>' + ul(NOTES.owner) +
+      '<h3><span class="badge badge--screen">Owner-supplied (screenshot)</span></h3>' + ul(NOTES.screenshot) + '<h3><span class="badge badge--owner">Owner-stated</span></h3>' + ul(NOTES.owner) +
       '<h3><span class="badge badge--proposal">Proposal</span></h3>' + ul(NOTES.proposal) +
       '<h3><span class="badge badge--open">Open questions</span></h3>' + ul(NOTES.open) +
       '<h3>Not built</h3><p>Real Salesforce metadata, CMCS integration, file storage (file names only are kept), security, Objective, PDF generation. All data is fake.</p>';
@@ -244,9 +306,9 @@
   ];
   function helpHTML() {
     const root = PAGE.root || '';
-    const map = [['Prototype hub', 'index.html', 'Start here: what this is and which variation to use.'], ['1 Record page', 'v1-record-page/index.html', 'One site at a time, with the lifecycle Path.'], ['2 Bulk grid', 'v2-bulk-grid/index.html', 'Many sites at once with a bulk action bar.'], ['3 Guided flow', 'v3-guided-flow/index.html', 'Step-by-step wizard to create a site.'], ['Stories', 'backlog/index.html', 'User stories, acceptance criteria, Excel export.'], ['Journey', 'journey/index.html', 'Site planned to enforcement live, with branches.'], ['Questions', 'questions/index.html', 'Index of open questions (also shown in context).']];
+    const map = [['Prototype hub', 'index.html', 'Start here: what this is and which variation to use.'], ['1 Record page', 'v1-record-page/index.html', 'One site at a time, with the lifecycle Path.'], ['2 Bulk grid', 'v2-bulk-grid/index.html', 'Many sites at once with a bulk action bar.'], ['3 Guided flow', 'v3-guided-flow/index.html', 'Step-by-step wizard to create a site.'], ['Data model', 'model/index.html', 'Site plus child records and the D141-to-live mapping.'], ['Stories', 'backlog/index.html', 'User stories, acceptance criteria, Excel export.'], ['Journey', 'journey/index.html', 'Site planned to enforcement live, with branches.'], ['Questions', 'questions/index.html', 'Index of open questions (also shown in context).']];
     return '<h3>Where am I?</h3><ul>' + map.map((m) => '<li><a href="' + root + m[1] + '">' + m[0] + '</a> - ' + m[2] + '</li>').join('') + '</ul>' +
-      '<h3>Legend</h3><ul class="legend"><li><span class="badge badge--proposal">Proposal</span> not stated by the owner; a best guess to confirm</li><li><span class="badge badge--owner">Owner-stated</span> confirmed in the owner\'s brief</li><li><span class="qb" style="margin:0">?</span> an open question at this exact spot; click for the question, why it matters and the current assumption</li><li><span class="pdot" style="margin:0"></span> amber dot: a Proposal on a field (hover for detail)</li><li><abbr class="req">*</abbr> required (for the selected stage)</li></ul>' +
+      '<h3>Legend</h3><ul class="legend"><li><span class="badge badge--proposal">Proposal</span> not stated by the owner; a best guess to confirm</li><li><span class="badge badge--owner">Owner-stated</span> confirmed in the owner\'s brief</li><li><span class="qb" style="margin:0">?</span> an open question at this exact spot; click for the question, why it matters and the current assumption</li><li><span class="pdot" style="margin:0"></span> amber dot: a Proposal on a field (hover for detail)</li><li><span class="badge badge--screen">Owner-supplied (screenshot)</span> structure copied from the live CMCS screenshots (fake values only)</li><li><span class="edot" style="margin:0"></span> blue-green dot: field already exists on the live Site</li><li><abbr class="req">*</abbr> required (for the selected stage)</li></ul>' +
       '<h3>Tour</h3><p><button class="btn btn--brand btn--sm" data-starttour>' + 'Take a quick tour of this page' + '</button></p>' +
       '<h3>Glossary</h3><dl>' + GLOSS.map((g) => '<dt><strong>' + esc(g[0]) + '</strong></dt><dd style="margin:0 0 6px">' + esc(g[1]) + '</dd>').join('') + '</dl>';
   }
@@ -284,5 +346,5 @@
   }
   document.addEventListener('click', (e) => { if (e.target.closest('#helpBtn')) openHelp(); });
 
-  window.Core = { $, $$, esc, isEmpty, icon, fmtDate, store, check, validateAll, applicable, reqKeys, alwaysReq, union, currentStage, toast, modal, closeModal, startTour, openHelp, chrome, footer, openDrawer, closeDrawer, fmap, NSW };
+  window.Core = { $, $$, esc, isEmpty, icon, fmtDate, fmtDateTime, checkChild, childProblems, store, check, validateAll, applicable, reqKeys, alwaysReq, union, currentStage, toast, modal, closeModal, startTour, openHelp, chrome, footer, openDrawer, closeDrawer, fmap, NSW };
 })();

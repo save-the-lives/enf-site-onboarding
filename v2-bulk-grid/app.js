@@ -7,7 +7,7 @@
 
   document.getElementById('top').innerHTML = C.chrome({ active: 'grid', tabs: [
     { id: 'grid', label: 'Bulk Site Entry', href: 'index.html' }, { id: 'sites', label: 'Sites (record page)', href: '../v1-record-page/index.html' },
-    { id: 'hub', label: 'Prototype hub', href: '../index.html' }, { id: 'st', label: 'Stories', href: '../backlog/index.html' }, { id: 'jr', label: 'Journey', href: '../journey/index.html' }, { id: 'q', label: 'Questions', href: '../questions/index.html' }] });
+    { id: 'hub', label: 'Prototype hub', href: '../index.html' }, { id: 'model', label: 'Data model', href: '../model/index.html' }, { id: 'st', label: 'Stories', href: '../backlog/index.html' }, { id: 'jr', label: 'Journey', href: '../journey/index.html' }, { id: 'q', label: 'Questions', href: '../questions/index.html' }] });
   C.footer({id:'v2', here:{crumbs:[['Prototype hub', '../index.html'],['Variation 2: Bulk grid entry']],what:'An editable grid of several sites of one record type. Each cell is validated as you leave it, each row shows its error count, and a bulk action bar appears when rows are selected.',prefer:'The same few fields change across many sites (a batch of installs, a decommission run) and speed matters more than per-site guidance.'}, tour:[{sel:'.rt-tabs',title:'Record type',text:'Columns differ per program, so one record type is shown at a time.'},{sel:'#gstage',title:'Working stage',text:'Chooses which stage columns and required fields are shown and validated.'},{sel:'.grid tbody tr',title:'Edit in place',text:'Type in a cell, then leave it. Invalid values are outlined with a message.'},{sel:'#validateAll',title:'Validate all',text:'Checks every row for the working stage. Select rows to reveal the bulk action bar.'}],  variation: 'Variation 2: bulk grid entry', hub: '../index.html', note: 'Editable grid for several sites of one record type, with per-cell and per-row validation and a bulk action bar (set activity, mark stage complete, set value).' });
   Companion.init({ t: 'grid', base: '../', ctx: () => ({ stage: G.stage }) });
 
@@ -21,14 +21,14 @@
   const stageStatus = (s) => { const st = stageObj(s); if (!st) return ''; if (s.done.indexOf(st.id) >= 0) return 'Complete'; const c = C.currentStage(s); return c && c.id === st.id ? 'Current' : 'Not started'; };
   function cols() {
     const rt = G.rt; const st = D.stages(rt).filter((x) => x.id === G.stage)[0] || D.stages(rt)[0];
-    let ks = ['code', 'activity', 'region'].concat(D.STAGE_REQ[st.id] || [], st.dates);
+    let ks = ['code', 'activity', 'status', 'region'].concat(D.STAGE_REQ[st.id] || [], st.dates);
     if (st.id === 'd064') ks = ks.concat(['szAmStart', 'szAmEnd', 'szPmStart', 'szPmEnd']);
     if (G.flashCol && ks.indexOf(G.flashCol) < 0) ks.push(G.flashCol);
     const ok = new Set(D.fieldsFor(rt).map((f) => f.k)); const seen = new Set();
     return ks.filter((k) => ok.has(k) && !seen.has(k) && seen.add(k)).map(fdef);
   }
   function enforceFor(s) { return G.attempted.has(s.id) ? C.union(C.alwaysReq(), C.reqKeys(s.rt, G.stage, dv(s))) : C.alwaysReq(); }
-  function validateRow(s) { const v = dv(s); if (v.schoolZone !== 'Yes') ['szAmStart', 'szAmEnd', 'szPmStart', 'szPmEnd'].forEach((k) => { if (v[k]) v[k] = ''; }); const enforce = enforceFor(s); if (!G.attempted.has(s.id)) { /* only format errors until attempted */ } const r = C.validateAll(v, s.rt, { sites: sites, id: s.id, enforce: G.attempted.has(s.id) ? enforce : new Set() }); G.errs[s.id] = r; return r; }
+  function validateRow(s) { const v = dv(s); if (v.schoolZone !== 'Yes') ['szAmStart', 'szAmEnd', 'szPmStart', 'szPmEnd'].forEach((k) => { if (v[k]) v[k] = ''; }); const enforce = enforceFor(s); if (!G.attempted.has(s.id)) { /* only format errors until attempted */ } const r = C.validateAll(v, s.rt, { sites: sites, id: s.id, certs: s.certs || [], enforce: G.attempted.has(s.id) ? enforce : new Set() }); G.errs[s.id] = r; return r; }
   const isDirty = (s) => G.draft[s.id] && JSON.stringify(G.draft[s.id]) !== JSON.stringify(s.v);
 
   function cell(s, f) {
@@ -39,11 +39,17 @@
     else inp = '<input data-r="' + s.id + '" data-k="' + f.k + '" type="' + (f.t === 'date' ? 'date' : f.t === 'time' ? 'time' : 'text') + '" value="' + esc(val) + '"' + (dis ? ' disabled' : '') + ' aria-label="' + esc(f.l) + '" autocomplete="off">';
     return '<td data-c="' + s.id + '|' + f.k + '" class="' + (err ? 'has-error' : '') + (warn && !err ? ' has-warn' : '') + '">' + inp + '<div class="cellerr">' + esc(err || warn || '') + '</div></td>';
   }
+  function childTD(s) {
+    const cp = C.childProblems(s, G.stage); const need = D.childReq(s.rt, G.stage);
+    const chip = (n, l, k) => '<span class="badge ' + ((need[k] && ((k === 'lane' || k === 'program') ? n < need[k] : false)) ? 'badge--open' : '') + '">' + n + ' ' + l + '</span> ';
+    return '<td data-child="' + s.id + '" style="min-width:200px">' + chip((s.lanes || []).length, 'Lanes', 'lane') + chip((s.programs || []).length, 'Program', 'program') + chip((s.devices || []).length, 'Devices', 'device') + chip((s.certs || []).length, 'Certs', 'cert') + (cp.length ? '<div class="cellerr">' + C.esc(cp[0].msg) + (cp.length > 1 ? ' (+' + (cp.length - 1) + ' more)' : '') + '</div>' : '') + '<a class="sel-note" href="../v1-record-page/index.html#/site/' + s.id + '?stage=' + G.stage + '">Open record</a></td>';
+  }
   function rowHTML(s) {
     const r = G.errs[s.id] || { errors: {} }; const n = Object.keys(r.errors).length; const cs = cols();
     return '<tr data-row="' + s.id + '" class="' + (G.sel.has(s.id) ? 'is-sel' : '') + '"><td class="c-sel"><input type="checkbox" data-sel="' + s.id + '"' + (G.sel.has(s.id) ? ' checked' : '') + ' aria-label="Select ' + esc(s.v.code) + '"></td>' + cs.map((f) => cell(s, f)).join('') +
-      '<td class="rowstat"><span class="badge ' + (stageStatus(s) === 'Complete' ? 'badge--ok' : stageStatus(s) === 'Current' ? 'badge--cur' : '') + '">' + stageStatus(s) + '</span> ' + (isDirty(s) ? '<span class="badge badge--proposal">Unsaved</span> ' : '') + (n ? '<span class="rowflag" title="Errors in this row">' + n + ' error' + (n > 1 ? 's' : '') + '</span>' : '') + '</td></tr>';
+      childTD(s) + '<td class="rowstat"><span class="badge ' + (stageStatus(s) === 'Complete' ? 'badge--ok' : stageStatus(s) === 'Current' ? 'badge--cur' : '') + '">' + stageStatus(s) + '</span> ' + (isDirty(s) ? '<span class="badge badge--proposal">Unsaved</span> ' : '') + (n ? '<span class="rowflag" title="Errors in this row">' + n + ' error' + (n > 1 ? 's' : '') + '</span>' : '') + '</td></tr>';
   }
+  const Companionx = () => Companion.qbadges({ child: 'lane' });
   function render() {
     const rows = rowsFor(); rows.forEach((s) => { if (!G.errs[s.id]) validateRow(s); });
     const cs = cols(); const nSel = G.sel.size;
@@ -53,8 +59,8 @@
       '<div class="rt-tabs" role="tablist">' + D.ALL.map((x) => '<button class="' + (x === G.rt ? 'is-active' : '') + '" data-rt="' + x + '">' + x + ' (' + sites.filter((s) => s.rt === x).length + ')</button>').join('') + '<span class="sel-note" style="margin:8px 0 0 12px;color:#444">Columns differ per record type, so the grid shows one record type at a time.</span></div>' +
       '<div class="gtool"><div><label for="gstage">Working stage ' + Companion.qbadges({ stage: G.stage }) + '</label><select id="gstage">' + stOpts + '</select></div><div class="sel-note" style="color:#444;max-width:420px">Columns show this stage\'s date and required fields (Proposal). Orange-bordered rows have unsaved edits.</div><span class="sp"></span>' +
       '<button class="btn" id="addRow">' + ic('plus', '', 12) + ' Add row</button><button class="btn" id="validateAll">Validate all</button><button class="btn btn--brand" id="saveAll">Save changes</button></div>' +
-      (nSel ? '<div class="bar" id="actionbar" role="toolbar" aria-label="Bulk actions"><strong>' + nSel + ' selected</strong><span style="opacity:.7">|</span><span>Set activity:</span><button class="btn" data-act="Commission">Commission</button><button class="btn" data-act="Decommission">Decommission</button><button class="btn" data-act="Refurbish">Refurbish</button><span style="opacity:.7">|</span><button class="btn" id="bulkComplete">Mark "' + esc((D.stages(G.rt).filter((x) => x.id === G.stage)[0] || {}).label) + '" complete</button><span style="opacity:.7">|</span><select id="bf" aria-label="Field to set">' + setFields.map((f) => '<option value="' + f.k + '">' + esc(f.l) + '</option>').join('') + '</select><span id="bvWrap"></span><button class="btn" id="bulkSet">Set value</button><span style="flex:1"></span><button class="btn" id="clearSel">Clear selection</button></div>' : '') +
-      '<div class="gwrap"><table class="grid"><thead><tr><th class="c-sel"><input type="checkbox" id="selAll" aria-label="Select all"' + (nSel && nSel === rows.length ? ' checked' : '') + '></th>' + cs.map((f) => '<th class="' + (G.flashCol === f.k ? 'col-flash' : '') + '">' + (C.reqKeys(G.rt, G.stage, {}).has(f.k) || D.ALWAYS_REQ.indexOf(f.k) >= 0 ? '<span style="color:#ba0517">*</span> ' : '') + esc(f.l) + Companion.qbadges({ field: f.k }) + '</th>').join('') + '<th>Stage status</th></tr></thead><tbody>' +
+      (nSel ? '<div class="bar" id="actionbar" role="toolbar" aria-label="Bulk actions"><strong>' + nSel + ' selected</strong><span style="opacity:.7">|</span><span>Set activity:</span><button class="btn" data-act="Commission">Commission</button><button class="btn" data-act="Decommission|Decommissioned - Camera removed">Decommission (camera removed)</button><button class="btn" data-act="Decommission|Decommissioned - Camera upgraded">Decommission (camera upgraded)</button><button class="btn" data-act="Refurbish">Refurbish</button><span style="opacity:.7">|</span><button class="btn" id="bulkComplete">Mark "' + esc((D.stages(G.rt).filter((x) => x.id === G.stage)[0] || {}).label) + '" complete</button><span style="opacity:.7">|</span><select id="bf" aria-label="Field to set">' + setFields.map((f) => '<option value="' + f.k + '">' + esc(f.l) + '</option>').join('') + '</select><span id="bvWrap"></span><button class="btn" id="bulkSet">Set value</button><span style="flex:1"></span><button class="btn" id="clearSel">Clear selection</button></div>' : '') +
+      '<div class="gwrap"><table class="grid"><thead><tr><th class="c-sel"><input type="checkbox" id="selAll" aria-label="Select all"' + (nSel && nSel === rows.length ? ' checked' : '') + '></th>' + cs.map((f) => '<th class="' + (G.flashCol === f.k ? 'col-flash' : '') + '">' + (C.reqKeys(G.rt, G.stage, {}).has(f.k) || D.ALWAYS_REQ.indexOf(f.k) >= 0 ? '<span style="color:#ba0517">*</span> ' : '') + esc(f.l) + Companion.qbadges({ field: f.k }) + '</th>').join('') + '<th>Child records (read-only here)' + Companionx() + '</th><th>Stage status</th></tr></thead><tbody>' +
       (rows.length ? rows.map(rowHTML).join('') : '<tr><td colspan="' + (cs.length + 2) + '" class="empty" style="padding:24px;text-align:center">No ' + G.rt + ' sites. Use Add row.</td></tr>') + '</tbody></table></div></main>';
     if (nSel) bulkValue();
     if (G.flashCol) { const th = $('.col-flash'); if (th) th.scrollIntoView({ inline: 'center', block: 'nearest' }); }
@@ -91,8 +97,8 @@
     if (t.dataset.rt) { G.rt = t.dataset.rt; G.sel.clear(); G.errs = {}; G.flashCol = null; if (!D.stages(G.rt).some((s) => s.id === G.stage)) G.stage = 'd064'; render(); return; }
     const ids = Array.from(G.sel);
     if (t.dataset.act) {
-      ids.forEach((id) => { const s = sites.filter((x) => x.id === id)[0]; dv(s).activity = t.dataset.act; });
-      G.errs = {}; render(); C.toast(t.dataset.act + ' set on ' + ids.length + ' site' + (ids.length > 1 ? 's' : '') + '. Save changes to keep them.', 'success'); return;
+      const [actv, stv] = t.dataset.act.split('|'); ids.forEach((id) => { const s = sites.filter((x) => x.id === id)[0]; dv(s).activity = actv; if (stv) dv(s).status = stv; });
+      G.errs = {}; render(); C.toast(actv + (stv ? ' (Status: ' + stv + ')' : '') + ' set on ' + ids.length + ' site' + (ids.length > 1 ? 's' : '') + '. Save changes to keep them.', 'success'); return;
     }
     if (t.id === 'clearSel') { G.sel.clear(); render(); return; }
     if (t.id === 'validateAll') { rowsFor().forEach((s) => G.attempted.add(s.id)); G.errs = {}; render(); const n = rowsFor().filter((s) => Object.keys(G.errs[s.id].errors).length).length; C.toast(n ? n + ' row' + (n > 1 ? 's have' : ' has') + ' errors for stage "' + esc((D.stages(G.rt).filter((x) => x.id === G.stage)[0] || {}).label) + '".' : 'All rows are valid for this stage.', n ? 'error' : 'success'); return; }
@@ -114,7 +120,7 @@
         if (s.done.indexOf(st) >= 0) return;
         if (idx < 0) { blocked++; return; }
         if (sts.slice(0, idx).some((x) => s.done.indexOf(x.id) < 0)) { blocked++; r.errors._order = 'An earlier stage is not complete.'; return; }
-        if (Object.keys(r.errors).length) { bad++; return; }
+        if (Object.keys(r.errors).length || C.childProblems(s, st).length) { bad++; return; }
         s.v = JSON.parse(JSON.stringify(dv(s))); s.done.push(st); done++;
       });
       persist(); const keepErr = G.errs; render();
