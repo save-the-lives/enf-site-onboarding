@@ -1,17 +1,10 @@
 <!doctype html>
 <html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Guided single-site record page - D141 Site Setup</title>
-<link rel="stylesheet" href="../shared/sf.css">
+<title>1 Guided single-site record page - D141 Site Setup</title>
+<link rel="stylesheet" href="../shared/sf.css"><link rel="stylesheet" href="v1.css">
 </head><body>
 <div id="top"></div>
-<main class="page">
-  <div class="pagehead"><span class="objicon" id="oi"></span><div style="flex:1"><div class="sub">D141 Site Setup</div><h1>Guided single-site record page</h1></div><span class="badge badge--skel">Skeleton - in progress</span></div>
-  <div class="card"><div class="card__body"><p>Placeholder. Will hold the site list, New Site record type picker and a Lightning record page with Path.</p><p style="margin-top:8px"><a href="../index.html">Back to prototype hub</a></p></div></div>
-</main>
-<script src="../shared/data.js"></script><script src="../shared/core.js"></script>
-<script>
-document.getElementById('top').innerHTML = Core.chrome({active:'v1',tabs:[{id:'hub',label:'Prototype hub',href:'../index.html'},{id:'v1',label:'1 Record page',href:'../v1-record-page/index.html'},{id:'v2',label:'2 Bulk grid',href:'../v2-bulk-grid/index.html'},{id:'v3',label:'3 Guided flow',href:'../v3-guided-flow/index.html'},{id:'st',label:'Stories',href:'../backlog/index.html'},{id:'jr',label:'Journey',href:'../journey/index.html'},{id:'q',label:'Questions',href:'../questions/index.html'}]});
-document.getElementById('oi').innerHTML = Core.icon('camera','',18);
-Core.footer({variation:'Guided single-site record page',hub:'../index.html',note:'Placeholder. Will hold the site list, New Site record type picker and a Lightning record page with Path.'});
-</script>
+<div id="app"></div>
+<script src="../shared/data.js"></script><script src="../shared/core.js"></script><script src="../shared/backlog.js"></script><script src="../shared/companion.js"></script>
+<script src="app.js"></script>
 </body></html>
