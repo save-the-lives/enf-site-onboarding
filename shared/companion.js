@@ -49,7 +49,7 @@
       const rel = ctx && ctx.stage && (s.stage === ctx.stage || s.stage === 'all');
       const links = s.screens.map((r) => chip(BL.label(r), BL.href(r, BASE))).join('');
       return '<div class="card" style="margin-bottom:8px' + (rel ? ';border-color:#0176d3' : '') + '"><div class="card__body" style="padding:10px 12px"><a href="' + BL.href({ t: 'story', id: s.id }, BASE) + '"><strong>' + s.id + '</strong></a> <span class="badge ' + (s.status === 'Agreed' ? 'badge--owner' : 'badge--proposal') + '">' + s.status + '</span> <span class="badge">' + s.prio + '</span>' +
-        '<div style="margin:4px 0">As a ' + esc(s.role) + ', I want ' + esc(s.want) + '</div><div class="chips">' + links + '</div>' +
+        '<div style="margin:4px 0">As a ' + esc(s.role) + ', I want to ' + esc(s.want) + '</div><div class="chips">' + links + '</div>' +
         (s.qs.length ? '<div style="margin-top:4px">Questions: ' + s.qs.map((id) => badge(BL.QUESTIONS.filter((q) => q.id === id)[0])).join('') + '</div>' : '') + '</div></div>';
     }).join('');
   }
@@ -57,6 +57,7 @@
     BASE = cfg.base || '../';
     const list = () => BL.storiesFor(cfg.t);
     const bar = document.querySelector('.mockbar'); if (!bar) return;
+    if (!list().length) { const qi0 = document.createElement('a'); qi0.href = BL.href({ t: 'qindex' }, BASE); qi0.textContent = 'Questions index'; bar.insertBefore(qi0, bar.querySelector('[data-notes]')); return; }
     const a = document.createElement('a'); a.href = '#'; a.id = 'storiesLink'; a.textContent = 'Stories for this screen (' + list().length + ')';
     bar.insertBefore(a, bar.querySelector('[data-notes]'));
     const qi = document.createElement('a'); qi.href = BL.href({ t: 'qindex' }, BASE); qi.textContent = 'Questions index';
