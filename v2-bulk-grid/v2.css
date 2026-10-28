@@ -29,3 +29,4 @@
 .rowflag{display:inline-block;min-width:18px;text-align:center;border-radius:9px;background:var(--err);color:#fff;font-size:11px;padding:0 6px}
 .dirty{border-left:3px solid var(--amber)}
 .fe.flash,.col-flash{animation:none}
+.grid td input[type=checkbox],.grid th input[type=checkbox]{width:16px;height:16px;border:0;margin:6px 0 0}

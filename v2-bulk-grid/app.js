@@ -95,7 +95,7 @@
       G.errs = {}; render(); C.toast(t.dataset.act + ' set on ' + ids.length + ' site' + (ids.length > 1 ? 's' : '') + '. Save changes to keep them.', 'success'); return;
     }
     if (t.id === 'clearSel') { G.sel.clear(); render(); return; }
-    if (t.id === 'validateAll') { rowsFor().forEach((s) => G.attempted.add(s.id)); G.errs = {}; render(); const n = rowsFor().filter((s) => Object.keys(G.errs[s.id].errors).length).length; C.toast(n ? n + ' row' + (n > 1 ? 's' : '') + ' have errors for stage "' + esc((D.stages(G.rt).filter((x) => x.id === G.stage)[0] || {}).label) + '".' : 'All rows are valid for this stage.', n ? 'error' : 'success'); return; }
+    if (t.id === 'validateAll') { rowsFor().forEach((s) => G.attempted.add(s.id)); G.errs = {}; render(); const n = rowsFor().filter((s) => Object.keys(G.errs[s.id].errors).length).length; C.toast(n ? n + ' row' + (n > 1 ? 's have' : ' has') + ' errors for stage "' + esc((D.stages(G.rt).filter((x) => x.id === G.stage)[0] || {}).label) + '".' : 'All rows are valid for this stage.', n ? 'error' : 'success'); return; }
     if (t.id === 'saveAll') { const r = saveRows(rowsFor().map((s) => s.id)); G.errs = {}; render(); if (!r.ok && !r.bad) C.toast('No changes to save.', 'info'); else C.toast(r.ok + ' saved' + (r.bad ? ', ' + r.bad + ' not saved because of errors' : '') + '.', r.bad ? 'warning' : 'success'); return; }
     if (t.id === 'addRow') {
       const code = 'TEST-' + String(9000 + sites.length).padStart(4, '0');
