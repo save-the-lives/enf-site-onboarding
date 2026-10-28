@@ -38,6 +38,7 @@
       S.stage = r.p.stage && sts.some((s) => s.id === r.p.stage) ? r.p.stage : (prev.id === r.id && S.stage ? S.stage : (C.currentStage(site) || sts[sts.length - 1]).id);
       let tab = r.p.tab === 'related' ? 'files' : r.p.tab; S.tab = tab && TABS.some((t) => t[0] === tab) ? tab : (prev.id === r.id ? S.tab : 'details');
       S.flash = r.p.field || null;
+      if (!r.p.stage && r.p.field) { const ds = sts.filter((x) => (x.dates || []).indexOf(r.p.field) >= 0)[0]; if (ds) S.stage = ds.id; }
       if (r.p.field && fdef(r.p.field)) { const f = fdef(r.p.field); if (f.sec === 'net') S.tab = 'network'; else if (f.sec !== 'life') { S.tab = 'details'; S.closed[f.sec] = false; } }
     }
     render();

@@ -12,11 +12,16 @@
   const ALLP = 'FDSC,RLSC,BPES,ASC,ODES'.split(',');
 
   /* ref helpers. ref = {t:'record'|'list'|'new'|'related'|'grid'|'flow'|'story'|'journey'|'question'|'stories'|'qindex'|'hub', ...} */
+  function rtFor(ref) {
+    let rt = ref.rt || 'FDSC';
+    try { const f = ref.field && window.D141 && D141.F.filter((x) => x.k === ref.field)[0]; if (f && f.p && f.p.indexOf(rt) < 0) rt = f.p[0]; } catch (e) { /* ignore */ }
+    return rt;
+  }
   function href(ref, base) {
     base = base || '';
     const qs = (o) => { const a = []; Object.keys(o).forEach((k) => { if (o[k]) a.push(k + '=' + encodeURIComponent(o[k])); }); return a.length ? '?' + a.join('&') : ''; };
     switch (ref.t) {
-      case 'record': return base + 'v1-record-page/index.html#/site/' + (ref.id || SAMPLE[ref.rt || 'FDSC']) + qs({ stage: ref.stage, field: ref.field, tab: ref.tab, q: ref.q });
+      case 'record': return base + 'v1-record-page/index.html#/site/' + (ref.id || SAMPLE[rtFor(ref)]) + qs({ stage: ref.stage, field: ref.field, tab: ref.tab, q: ref.q });
       case 'list': return base + 'v1-record-page/index.html#/sites' + qs({ q: ref.q });
       case 'new': return base + 'v1-record-page/index.html#/sites' + qs({ new: '1' });
       case 'grid': return base + 'v2-bulk-grid/index.html' + qs({ stage: ref.stage, field: ref.field, q: ref.q });

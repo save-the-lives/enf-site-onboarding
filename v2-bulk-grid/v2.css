@@ -30,3 +30,4 @@
 .dirty{border-left:3px solid var(--amber)}
 .fe.flash,.col-flash{animation:none}
 .grid td input[type=checkbox],.grid th input[type=checkbox]{width:16px;height:16px;border:0;margin:6px 0 0}
+.grid td:has([data-k="status"]){min-width:250px}
