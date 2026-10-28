@@ -164,7 +164,7 @@
     const tabs = cfg.tabs.map((t) => '<li class="nav__item' + (t.id === cfg.active ? ' is-active' : '') + '"><a href="' + t.href + '">' + t.label + '</a></li>').join('');
     return '<header class="gh"><div class="gh__left"><button class="gh__launcher" title="App Launcher" aria-label="App Launcher">' + icon('waffle', '', 20) + '</button></div>' +
       '<div class="gh__search"><div class="search">' + icon('search', 'search__ic', 14) + '<input id="gsearch" type="search" placeholder="Search Sites and more..." aria-label="Search"></div></div>' +
-      '<div class="gh__right"><button class="gh__btn" title="Favorites">' + icon('star', '', 16) + '</button><button class="gh__btn" title="Setup">' + icon('gear', '', 16) + '</button><button class="gh__btn" title="Help">' + icon('question', '', 16) + '</button><button class="gh__btn" title="Notifications">' + icon('bell', '', 16) + '</button><span class="avatar" title="Mock user">TP</span></div></header>' +
+      '<div class="gh__right"><button class="gh__btn" title="Favorites">' + icon('star', '', 16) + '</button><button class="gh__btn" title="Setup">' + icon('gear', '', 16) + '</button><button class="gh__btn" id="helpBtn" title="Help and guide" aria-label="Help and guide">' + icon('question', '', 16) + '</button><button class="gh__btn" title="Notifications">' + icon('bell', '', 16) + '</button><span class="avatar" title="Mock user">TP</span></div></header>' +
       '<nav class="nav"><div class="nav__app"><span class="nav__appicon">' + icon('camera', '', 16) + '</span><span class="nav__appname">CMCS <small>(mockup)</small></span></div><ul class="nav__list">' + tabs + '</ul></nav>';
   }
 
@@ -215,7 +215,10 @@
   }
   function closeDrawer() { const d = $('#drawer'); if (d) d.remove(); }
 
-  function footer(cfg) { // {variation, hub, note}
+  function footer(cfg) { // {variation, hub, note, here, tour, id}
+    PAGE = { tour: cfg.tour || null, id: cfg.id || cfg.variation, hub: cfg.hub, root: cfg.hub.replace(/index\.html$/, '') };
+    if (cfg.here) hereBar(cfg.here);
+    if (cfg.tour && cfg.tourAuto) setTimeout(() => startTour(false), 600);
     const f = document.createElement('div'); f.className = 'mockbar';
     f.innerHTML = '<span><strong>MOCKUP</strong> - not Salesforce - fake data</span><span class="mockbar__sp"></span><span>' + esc(cfg.variation) + '</span><a href="' + cfg.hub + '">Prototype hub</a><a href="#" data-notes>Mockup notes</a><a href="#" data-reset>Reset sample data</a>';
     document.body.appendChild(f);
@@ -223,5 +226,63 @@
     f.querySelector('[data-reset]').onclick = (e) => { e.preventDefault(); store.reset(); toast('Sample data reset.', 'info'); setTimeout(() => location.reload(), 600); };
   }
 
-  window.Core = { $, $$, esc, isEmpty, icon, fmtDate, store, check, validateAll, applicable, reqKeys, alwaysReq, union, currentStage, toast, modal, closeModal, chrome, footer, openDrawer, closeDrawer, fmap, NSW };
+
+  /* ---------- help, "you are here", tour ---------- */
+  let PAGE = { tour: null, id: 'page', hub: 'index.html' };
+  const GLOSS = [
+    ['CMCS', 'The Salesforce instance where camera site data is held. Another business unit currently re-keys the D141 into it.'],
+    ['D141', 'The Excel template a Technical Project Manager fills in per camera site today. This prototype replaces it with direct, validated capture.'],
+    ['TPM', 'Technical Project Manager: commissions, decommissions or refurbishes camera sites.'],
+    ['Program / record type', 'FDSC Fixed Digital Speed Camera; RLSC Red Light Speed Camera; BPES Bus Priority Enforcement System; ASC Average Speed Camera; ODES Over Dimension Enforcement System. In Salesforce each is a record type on the Site object, and the layout changes per type.'],
+    ['Path', 'The chevron bar across the top of a Salesforce record showing the lifecycle stages. Click a stage to see its section.'],
+    ['D064, D128', 'Form numbers used for the Site Inspection (D064) and Network Commissioned (D128) stages. D128 meaning is an open question.'],
+    ['Data Block Approval', 'A lifecycle date in the template. Its exact meaning is an open question.'],
+    ['S137, S138, S137A', 'Sections of legislation, shown only as labels on certification dates. Not explained here.'],
+    ['Objective', 'The document system where the D141 is filed today.'],
+    ['SMD, DMD, CRD', 'Speed Measurement Device, Dimensional Measurement Device, Camera Recording Device.'],
+    ['Activity type', 'Commission, Decommission or Refurbish.']
+  ];
+  function helpHTML() {
+    const root = PAGE.root || '';
+    const map = [['Prototype hub', 'index.html', 'Start here: what this is and which variation to use.'], ['1 Record page', 'v1-record-page/index.html', 'One site at a time, with the lifecycle Path.'], ['2 Bulk grid', 'v2-bulk-grid/index.html', 'Many sites at once with a bulk action bar.'], ['3 Guided flow', 'v3-guided-flow/index.html', 'Step-by-step wizard to create a site.'], ['Stories', 'backlog/index.html', 'User stories, acceptance criteria, Excel export.'], ['Journey', 'journey/index.html', 'Site planned to enforcement live, with branches.'], ['Questions', 'questions/index.html', 'Index of open questions (also shown in context).']];
+    return '<h3>Where am I?</h3><ul>' + map.map((m) => '<li><a href="' + root + m[1] + '">' + m[0] + '</a> - ' + m[2] + '</li>').join('') + '</ul>' +
+      '<h3>Legend</h3><ul class="legend"><li><span class="badge badge--proposal">Proposal</span> not stated by the owner; a best guess to confirm</li><li><span class="badge badge--owner">Owner-stated</span> confirmed in the owner\'s brief</li><li><span class="qb" style="margin:0">?</span> an open question at this exact spot; click for the question, why it matters and the current assumption</li><li><span class="pdot" style="margin:0"></span> amber dot: a Proposal on a field (hover for detail)</li><li><abbr class="req">*</abbr> required (for the selected stage)</li></ul>' +
+      '<h3>Tour</h3><p><button class="btn btn--brand btn--sm" data-starttour>' + 'Take a quick tour of this page' + '</button></p>' +
+      '<h3>Glossary</h3><dl>' + GLOSS.map((g) => '<dt><strong>' + esc(g[0]) + '</strong></dt><dd style="margin:0 0 6px">' + esc(g[1]) + '</dd>').join('') + '</dl>';
+  }
+  function openHelp() {
+    closeDrawer(); const d = document.createElement('aside'); d.id = 'drawer'; d.className = 'drawer'; d.setAttribute('aria-label', 'Help and guide');
+    d.innerHTML = '<header><h2>Help and guide</h2><button class="modal__close" data-dclose aria-label="Close">' + icon('close', '', 16) + '</button></header><div class="drawer__body">' + helpHTML() + '</div>';
+    document.body.appendChild(d); d.querySelector('[data-dclose]').onclick = closeDrawer;
+    d.querySelector('[data-starttour]').onclick = () => { closeDrawer(); startTour(true); };
+  }
+  function hereBar(h) {
+    const nav = $('.nav'); if (!nav) return;
+    const b = document.createElement('div'); b.className = 'here';
+    b.innerHTML = '<div class="here__row"><nav aria-label="Breadcrumb" class="here__crumbs">' + h.crumbs.map((c, i) => (c[1] ? '<a href="' + c[1] + '">' + esc(c[0]) + '</a>' : '<span class="here__cur" aria-current="page">' + esc(c[0]) + '</span>') + (i < h.crumbs.length - 1 ? ' <span class="here__sep">&rsaquo;</span> ' : '')).join('') + '</nav><span class="badge badge--cur">You are here</span><span style="flex:1"></span>' +
+      (h.what ? '<button class="link-btn" id="whatBtn" aria-expanded="false">What am I looking at?</button>' : '') + (h.crumbs.length > 1 ? '<a href="' + PAGE.hub + '" class="here__back">' + icon('arrowleft', '', 12) + ' Back to hub</a>' : '') + '</div>' +
+      (h.what ? '<div class="here__what" id="whatBox" hidden><p><strong>Purpose.</strong> ' + esc(h.what) + '</p><p><strong>Prefer this when.</strong> ' + esc(h.prefer) + '</p></div>' : '');
+    nav.after(b);
+    const w = b.querySelector('#whatBtn'); if (w) { const box = b.querySelector('#whatBox'); const seen = (function () { try { return localStorage.getItem('enf-what-' + PAGE.id); } catch (e) { return null; } })(); if (!seen) { box.hidden = false; w.setAttribute('aria-expanded', 'true'); } w.onclick = () => { box.hidden = !box.hidden; w.setAttribute('aria-expanded', String(!box.hidden)); try { localStorage.setItem('enf-what-' + PAGE.id, '1'); } catch (e) {} }; }
+  }
+  function startTour(force) {
+    const steps = (PAGE.tour || []).filter((s) => $(s.sel)); if (!steps.length) { toast('No tour for this page. Open Help for the map and glossary.', 'info'); return; }
+    const key = 'enf-tour-' + PAGE.id;
+    if (!force) { try { if (localStorage.getItem(key)) return; } catch (e) {} }
+    let i = 0; const ov = document.createElement('div'); ov.className = 'tour'; document.body.appendChild(ov);
+    const end = () => { ov.remove(); document.querySelectorAll('.tour-pop,.tour-spot').forEach((n) => n.remove()); try { localStorage.setItem(key, '1'); } catch (e) {} };
+    const show = () => {
+      document.querySelectorAll('.tour-pop,.tour-spot').forEach((n) => n.remove()); const s = steps[i]; const el = $(s.sel); el.scrollIntoView({ block: 'center' });
+      const r = el.getBoundingClientRect(); const spot = document.createElement('div'); spot.className = 'tour-spot'; spot.style.cssText = 'top:' + (r.top - 4) + 'px;left:' + (r.left - 4) + 'px;width:' + (r.width + 8) + 'px;height:' + (r.height + 8) + 'px'; document.body.appendChild(spot);
+      const pop = document.createElement('div'); pop.className = 'tour-pop'; pop.setAttribute('role', 'dialog');
+      pop.innerHTML = '<div class="tour-pop__h">' + esc(s.title) + '<span class="sel-note" style="float:right">' + (i + 1) + ' of ' + steps.length + '</span></div><div class="tour-pop__b">' + esc(s.text) + '</div><div class="tour-pop__f"><button class="link-btn" data-skip>Skip tour</button><span style="flex:1"></span>' + (i ? '<button class="btn btn--sm" data-back>Back</button>' : '') + '<button class="btn btn--brand btn--sm" data-nx>' + (i === steps.length - 1 ? 'Done' : 'Next') + '</button></div>';
+      document.body.appendChild(pop);
+      const top = r.bottom + 12 + 160 > window.innerHeight ? Math.max(8, r.top - 172) : r.bottom + 12; pop.style.top = top + 'px'; pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 360)) + 'px';
+      pop.querySelector('[data-skip]').onclick = end; pop.querySelector('[data-nx]').onclick = () => { if (i === steps.length - 1) end(); else { i++; show(); } }; const bk = pop.querySelector('[data-back]'); if (bk) bk.onclick = () => { i--; show(); };
+    };
+    show();
+  }
+  document.addEventListener('click', (e) => { if (e.target.closest('#helpBtn')) openHelp(); });
+
+  window.Core = { $, $$, esc, isEmpty, icon, fmtDate, store, check, validateAll, applicable, reqKeys, alwaysReq, union, currentStage, toast, modal, closeModal, startTour, openHelp, chrome, footer, openDrawer, closeDrawer, fmap, NSW };
 })();

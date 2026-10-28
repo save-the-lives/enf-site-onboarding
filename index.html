@@ -9,29 +9,47 @@
   <div class="card"><div class="card__body">
     <p>Capturing D141 camera site data directly in Salesforce (CMCS) with validation at the point of entry, instead of an Excel form that is re-keyed. The spreadsheet layout does not have to be copied: the outcome is validated, complete site details feeding CMCS. Each variation below is a separate, Lightning-styled prototype of the same data model (five record types: FDSC, RLSC, BPES, ASC, ODES).</p>
   </div></div>
-  <h2 style="margin:16px 0 8px;font-size:16px">Capture variations</h2>
-  <div class="tiles">
-    <a class="tile" href="v1-record-page/index.html"><h3>1. Guided single-site record page <span class="badge badge--skel">Skeleton - in progress</span></h3>
+  <div class="card" id="starthere"><div class="card__head"><h2>Start here</h2><span class="badge badge--cur">2-minute walkthrough</span><button class="btn btn--sm" id="tourBtn">Take the tour</button></div><div class="card__body start">
+    <div><h3 style="font-size:14px;margin-bottom:6px">What this is</h3><p>Technical Project Managers fill an Excel D141 for every camera site, and another business unit re-keys it into CMCS. These prototypes show how the same data could be captured directly in Salesforce, with validation at the point of entry. It is a <strong>mockup with fake data</strong> for the Salesforce build team; nothing is built in Salesforce.</p>
+      <h3 style="font-size:14px;margin:12px 0 6px">Who it is for</h3><p>The program owner (to decide), Technical Project Managers, unit managers, camera networks engineers, CMCS data stewards, and the Salesforce delivery team.</p>
+      <h3 style="font-size:14px;margin:12px 0 6px">How to read it</h3><p><span class="badge badge--proposal">Proposal</span> means the owner did not state it. <span class="qb" style="margin:0">?</span> marks an open question at the exact spot it matters. The Help button (top right) has a map, legend and glossary.</p></div>
+    <div><h3 style="font-size:14px;margin-bottom:6px">Four things to try</h3><ol>
+      <li><a href="v1-record-page/index.html#/sites?new=1">Create a site</a>: pick a record type and watch the layout change.</li>
+      <li><a href="v1-record-page/index.html#/site/s1?stage=d128&field=ipCam">Trigger a validation error</a>: click Edit, type 192.0.2.300 in IP Address (Camera) and leave the field.</li>
+      <li><a href="v2-bulk-grid/index.html?stage=d128">Update several sites at once</a>: select rows, use the bulk action bar, mark a stage complete.</li>
+      <li><a href="v1-record-page/index.html#/site/s1?stage=dba&field=dDBA&q=Q-003">Open a question in context</a>: click the blue ? beside Data Block Approval Date.</li></ol>
+      <h3 style="font-size:14px;margin:12px 0 6px">Two-minute walkthrough</h3><ol>
+      <li>Read the three variations below and pick one that fits the job.</li>
+      <li>Open it; the grey bar under the menu shows where you are and has a Back to hub link.</li>
+      <li>Click the Path stages, edit a field, press Mark Status as Complete.</li>
+      <li>Open Stories for this screen (bottom bar) to see which stories and acceptance criteria govern it.</li>
+      <li>Check Journey for the end-to-end picture and Questions for what is still undecided.</li></ol></div></div></div>
+  <h2 style="margin:16px 0 8px;font-size:16px" id="variations">Capture variations</h2>
+  <div class="tiles" id="vtiles">
+    <a class="tile" href="v1-record-page/index.html"><h3>1. Guided single-site record page</h3>
       <p>Site list, New Site with record type picker, then a Lightning record page with a Path across the lifecycle, stage-gated sections, inline edit and attachments.</p>
       <dl><dt>Use it for</dt><dd>Entering or maintaining one site, following it through each lifecycle stage.</dd><dt>Prefer when</dt><dd>A TPM is working a single site over weeks and needs the stage gates and attachments in one place.</dd></dl></a>
-    <a class="tile" href="v2-bulk-grid/index.html"><h3>2. Bulk grid entry <span class="badge badge--skel">Skeleton - in progress</span></h3>
+    <a class="tile" href="v2-bulk-grid/index.html"><h3>2. Bulk grid entry</h3>
       <p>Editable grid of several sites with per-row validation, a bulk action bar (Commission, Decommission, Refurbish, mark stage complete, set value).</p>
       <dl><dt>Use it for</dt><dd>Entering or changing many sites at once (a batch of installs, a decommission run, a refurbishment programme).</dd><dt>Prefer when</dt><dd>The same few fields change across many sites and speed matters more than per-site guidance.</dd></dl></a>
-    <a class="tile" href="v3-guided-flow/index.html"><h3>3. Guided screen flow <span class="badge badge--skel">Skeleton - in progress</span></h3>
+    <a class="tile" href="v3-guided-flow/index.html"><h3>3. Guided screen flow</h3>
       <p>Step-by-step wizard (Screen Flow style): program, activity, location, equipment, network, school zone, review. One concern per screen with validation before Next.</p>
       <dl><dt>Use it for</dt><dd>First-time creation of a site by someone who does not know the data model.</dd><dt>Prefer when</dt><dd>Fewer mistakes matter more than speed; new or occasional users.</dd></dl></a>
   </div>
   <h2 style="margin:16px 0 8px;font-size:16px">Companion layer</h2>
   <div class="tiles">
-    <a class="tile" href="backlog/index.html"><h3>User stories <span class="badge badge--skel">Skeleton - in progress</span></h3><p>Living backlog with Given/When/Then acceptance criteria, linked to screens, fields and stages. Excel export.</p></a>
-    <a class="tile" href="journey/index.html"><h3>User journey <span class="badge badge--skel">Skeleton - in progress</span></h3><p>Site identified to enforcement live, with decommission and refurbish branches. Proposed stage names, to confirm.</p></a>
-    <a class="tile" href="questions/index.html"><h3>Open questions <span class="badge badge--skel">Skeleton - in progress</span></h3><p>Index of questions; each also appears in context at the field, stage, story or journey step it concerns.</p></a>
+    <a class="tile" href="backlog/index.html"><h3>User stories</h3><p>Living backlog with Given/When/Then acceptance criteria, linked to screens, fields and stages. Excel export.</p></a>
+    <a class="tile" href="journey/index.html"><h3>User journey</h3><p>Site identified to enforcement live, with decommission and refurbish branches. Proposed stage names, to confirm.</p></a>
+    <a class="tile" href="questions/index.html"><h3>Open questions</h3><p>Index of questions; each also appears in context at the field, stage, story or journey step it concerns.</p></a>
   </div>
 </main>
 <script src="shared/data.js"></script><script src="shared/core.js"></script>
 <script>
 document.getElementById('top').innerHTML = Core.chrome({active:'hub',tabs:[{id:'hub',label:'Prototype hub',href:'index.html'},{id:'v1',label:'1 Record page',href:'v1-record-page/index.html'},{id:'v2',label:'2 Bulk grid',href:'v2-bulk-grid/index.html'},{id:'v3',label:'3 Guided flow',href:'v3-guided-flow/index.html'},{id:'st',label:'Stories',href:'backlog/index.html'},{id:'jr',label:'Journey',href:'journey/index.html'},{id:'q',label:'Questions',href:'questions/index.html'}]});
 document.getElementById('hubicon').innerHTML = Core.icon('camera','',18);
-Core.footer({variation:'Hub',hub:'index.html',note:'Hub of prototype variations. All are proposals.'});
+Core.footer({variation:'Hub',id:'hub',hub:'index.html',note:'Hub of prototype variations. All are proposals.',tourAuto:true,
+  here:{crumbs:[['Prototype hub']],what:'The entry point: what the prototype is for, three ways to capture site data, and a companion layer of stories, journey and questions.',prefer:'You are new here. Start with the Start here panel.'},
+  tour:[{sel:'#starthere',title:'Start here',text:'What this is, four things to try and a two-minute walkthrough.'},{sel:'#vtiles',title:'Three variations',text:'Each tile says what it is for and when to prefer it. Open one.'},{sel:'#helpBtn',title:'Help any time',text:'The Help button on every page opens a map, a legend for the badges and a glossary.'}]});
+document.getElementById('tourBtn').onclick=()=>Core.startTour(true);
 </script>
 </body></html>

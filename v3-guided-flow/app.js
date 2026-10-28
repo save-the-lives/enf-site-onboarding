@@ -4,7 +4,7 @@
   document.getElementById('top').innerHTML = C.chrome({ active: 'flow', tabs: [
     { id: 'flow', label: 'New Site Guide', href: 'index.html' }, { id: 'sites', label: 'Sites (record page)', href: '../v1-record-page/index.html' },
     { id: 'hub', label: 'Prototype hub', href: '../index.html' }, { id: 'st', label: 'Stories', href: '../backlog/index.html' }, { id: 'jr', label: 'Journey', href: '../journey/index.html' }, { id: 'q', label: 'Questions', href: '../questions/index.html' }] });
-  C.footer({ variation: 'Variation 3: guided screen flow', hub: '../index.html', note: 'Screen Flow style wizard: one concern per screen, validation before Next, review screen with edit links, creates the Site on Finish.' });
+  C.footer({id:'v3', here:{crumbs:[['Prototype hub', '../index.html'],['Variation 3: Guided screen flow']],what:'A Screen Flow style wizard that creates a site one concern per screen, validating before Next, with a review screen.',prefer:'New or occasional users, or when fewer mistakes matter more than speed.'}, tour:[{sel:'.progress',title:'Progress',text:'Shows where you are. Steps with problems turn red.'},{sel:'.flowcard__b',title:'One concern per screen',text:'Fields adapt to the program chosen on step 1.'},{sel:'[data-next]',title:'Next',text:'Validates this step before moving on.'}],  variation: 'Variation 3: guided screen flow', hub: '../index.html', note: 'Screen Flow style wizard: one concern per screen, validation before Next, review screen with edit links, creates the Site on Finish.' });
   Companion.init({ t: 'flow', base: '../' });
 
   const STEPS = [
