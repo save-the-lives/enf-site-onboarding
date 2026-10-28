@@ -282,7 +282,7 @@
     if (cfg.here) hereBar(cfg.here);
     if (cfg.tour && cfg.tourAuto) setTimeout(() => startTour(false), 600);
     const f = document.createElement('div'); f.className = 'mockbar';
-    f.innerHTML = '<span><strong>MOCKUP</strong> - not Salesforce - fake data</span><span class="mockbar__sp"></span><span>' + esc(cfg.variation) + '</span><a href="' + cfg.hub + '">Prototype hub</a><a href="#" data-notes>Mockup notes</a><a href="#" data-reset>Reset sample data</a>';
+    f.innerHTML = '<span><strong>MOCKUP</strong> - not Salesforce - fake data</span><span class="mockbar__sp"></span><span>' + esc(cfg.variation) + '</span><a href="#" data-notes>Mockup notes</a><a href="#" data-reset>Reset sample data</a>';
     document.body.appendChild(f);
     f.querySelector('[data-notes]').onclick = (e) => { e.preventDefault(); openDrawer(cfg.note); };
     f.querySelector('[data-reset]').onclick = (e) => { e.preventDefault(); store.reset(); toast('Sample data reset.', 'info'); setTimeout(() => location.reload(), 600); };

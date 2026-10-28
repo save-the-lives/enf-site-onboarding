@@ -74,7 +74,7 @@
 .dropzone{border:2px dashed #c9c9c9;border-radius:4px;padding:10px 12px;background:#fafaf9}
 .filerow{display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid #eee}.filerow .nm{flex:1}
 .check li{display:flex;gap:8px;align-items:flex-start;padding:3px 0}
-.check .ic{margin-top:3px}.check .done{color:var(--ok)}.check .todo{color:#c9c9c9}
+.check .ic{margin-top:3px}.check .done{color:var(--ok)}.check .todo{color:#706e6b}
 .check a{color:var(--text)}
 .lifetbl td,.lifetbl th{padding:4px 8px}
 .foot-edit{position:sticky;bottom:30px;background:#f3f3f3;border-top:1px solid #c9c9c9;display:flex;justify-content:center;gap:8px;padding:10px;z-index:30;margin:0 -12px}
