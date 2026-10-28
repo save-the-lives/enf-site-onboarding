@@ -7,22 +7,26 @@
 <main class="page" id="main">
   <div class="pagehead"><span class="objicon" id="oi"></span><div style="flex:1"><div class="sub">D141 Site Setup</div><h1>Open questions (index)</h1></div><span class="badge badge--open">Index only</span></div>
   <div class="card"><div class="card__body"><span class="sel-note">This is an <strong>index</strong>. Each question also appears in context, as a blue <span class="qb" style="margin:0">?</span> badge at the field, stage, story or journey step it concerns. Use the chips to jump to that context; the popover there links back here. Answers are stored in this browser only (mockup).</span></div></div>
-  <div class="card"><table class="tbl" id="qt"></table></div>
+  <p class="sel-note" id="stgnote" style="margin:6px 0"></p><div class="card"><table class="tbl" id="qt"></table></div>
 </main>
-<script src="../shared/data.js"></script><script src="../shared/core.js"></script><script src="../shared/backlog.js"></script><script src="../shared/companion.js"></script><script src="../shared/pages.js"></script>
+<script src="../shared/data.js"></script><script src="../shared/core.js"></script><script src="../shared/backlog.js"></script><script src="../shared/stagenav.js"></script><script src="../shared/companion.js"></script><script src="../shared/pages.js"></script>
 <script>
 (function () {
   pageShell('q', 'Open questions', 'Index of open questions; every row deep-links to the in-context location.');
   document.getElementById('oi').innerHTML = Core.icon('question', '', 18);
   const esc = Core.esc;
   function chips(q) { return '<div class="chips">' + Companion.contextChips(q, '../') + '</div>'; }
+  let STG = (window.StageNav && StageNav.urlStage) || '';
+  if (window.StageNav) StageNav.page((sid, nav) => { STG = nav.branch === 'commission' ? sid : ''; render(); return true; });
   function render() {
     const ans = BL.answers(); const tgt = location.hash.replace('#', '');
     document.getElementById('qt').innerHTML = '<thead><tr><th>ID</th><th>Question</th><th>Current assumption (Proposal)</th><th>Who can answer</th><th>Status</th><th>Where it appears (click to open in context)</th></tr></thead><tbody>' +
-      BL.QUESTIONS.map((q) => { const a = ans[q.id]; return '<tr id="' + q.id + '"' + (tgt === q.id ? ' style="outline:2px solid #0176d3"' : '') + '><td><strong>' + q.id + '</strong></td><td><strong>' + esc(q.q) + '</strong><div class="sel-note">' + esc(q.why) + '</div></td><td>' + esc(q.assume) + '</td><td>' + esc(q.who) + '</td><td><span class="badge ' + (a && a.status === 'Answered' ? 'badge--ok' : 'badge--open') + '">' + (a && a.status === 'Answered' ? 'Answered' : 'Open') + '</span>' + (a ? '<div class="sel-note">' + esc(a.text) + '</div>' : '') + '<div><button class="link-btn" data-ans="' + q.id + '">' + (a ? 'Edit answer' : 'Record answer') + '</button></div></td><td>' + chips(q) + '<p style="margin-top:6px"><a class="btn btn--brand btn--sm" href="' + BL.href(Object.assign({}, q.primary, { q: q.id }), '../') + '">Open in context</a></p></td></tr>'; }).join('') + '</tbody>';
+      BL.QUESTIONS.filter((q) => !STG || (q.at.stage || []).indexOf(STG) >= 0 || (q.primary && q.primary.stage === STG)).map((q) => { const a = ans[q.id]; return '<tr id="' + q.id + '"' + (tgt === q.id ? ' style="outline:2px solid #0176d3"' : '') + '><td><strong>' + q.id + '</strong></td><td><strong>' + esc(q.q) + '</strong><div class="sel-note">' + esc(q.why) + '</div></td><td>' + esc(q.assume) + '</td><td>' + esc(q.who) + '</td><td><span class="badge ' + (a && a.status === 'Answered' ? 'badge--ok' : 'badge--open') + '">' + (a && a.status === 'Answered' ? 'Answered' : 'Open') + '</span>' + (a ? '<div class="sel-note">' + esc(a.text) + '</div>' : '') + '<div><button class="link-btn" data-ans="' + q.id + '">' + (a ? 'Edit answer' : 'Record answer') + '</button></div></td><td>' + chips(q) + '<p style="margin-top:6px"><a class="btn btn--brand btn--sm" href="' + BL.href(Object.assign({}, q.primary, { q: q.id }), '../') + '">Open in context</a></p></td></tr>'; }).join('') + '</tbody>' + (STG ? '' : '');
+    document.getElementById('stgnote').innerHTML = STG ? 'Showing questions for stage <strong>' + esc(BL.STAGE_NAME[STG] || STG) + '</strong>. <button class="link-btn" id="stgclr">Show all stages</button>' : '';
     const t = document.getElementById(tgt); if (t) t.scrollIntoView({ block: 'center' });
   }
   document.addEventListener('click', (e) => {
+    if (e.target.id === 'stgclr') { STG = ''; if (window.StageNav) StageNav.select(null); render(); return; }
     const b = e.target.closest('[data-ans]'); if (!b) return; const q = BL.QUESTIONS.filter((x) => x.id === b.dataset.ans)[0]; const cur = BL.answers()[q.id] || {};
     Core.modal({ title: 'Answer ' + q.id, body: '<p style="margin-bottom:8px"><strong>' + esc(q.q) + '</strong></p><div class="fe fe--edit"><label class="fe__label" for="at">Status</label><select id="as"><option>Open</option><option' + (cur.status === 'Answered' ? ' selected' : '') + '>Answered</option></select></div><div class="fe fe--edit"><label class="fe__label" for="at">Answer</label><input type="text" id="at" value="' + esc(cur.text || '') + '" placeholder="Short answer"><div class="fe__help" id="aerr"></div></div><p class="sel-note">Stored in this browser only.</p>', footer: '<button class="btn" data-mclose2>Cancel</button><button class="btn btn--brand" id="aSave">Save</button>' });
     document.querySelector('[data-mclose2]').onclick = Core.closeModal;

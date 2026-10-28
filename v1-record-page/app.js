@@ -3,7 +3,7 @@
   const $ = C.$, $$ = C.$$;
   let sites = C.store.load();
   sites.forEach((s) => { ['lanes', 'programs', 'devices', 'certs', 'files'].forEach((k) => { s[k] = s[k] || []; }); });
-  const S = { route: { name: 'list' }, editing: false, draft: null, errors: {}, warns: {}, enforce: new Set(), summary: null, stage: null, tab: 'details', closed: {}, search: '', sort: 'code', dir: 1, flash: null, sel: new Set(), propCols: false, rtab: 'programs', menu: null, follow: false };
+  const S = { route: { name: 'list' }, editing: false, draft: null, errors: {}, warns: {}, enforce: new Set(), summary: null, stage: null, tab: 'details', closed: {}, search: '', sort: 'code', dir: 1, flash: null, sel: new Set(), propCols: false, rtab: 'programs', menu: null, follow: false, stageFilter: '' };
   const persist = () => C.store.save(sites);
   const touch = (site) => { site.modified = new Date().toISOString(); persist(); };
   const byId = (id) => sites.filter((s) => s.id === id)[0];
@@ -45,6 +45,13 @@
     if (r.name === 'list' && r.p.new) openNew();
   }
   window.addEventListener('hashchange', onRoute);
+  if (window.StageNav) StageNav.page((sid, nav) => {
+    if (nav.branch !== 'commission') return false;
+    if (S.route.name === 'site') { const id = S.route.id; S.stage = sid; S.tab = 'details'; S.summary = null; history.replaceState(null, '', '#/site/' + id + '?stage=' + sid); render(); const sc = $('#stagecard'); if (sc) sc.scrollIntoView({ block: 'start' }); return true; }
+    if (S.route.name === 'list' || !S.route.name) { S.stageFilter = sid; render(); return true; }
+    return false;
+  });
+  if (window.StageNav && StageNav.urlStage && location.hash.indexOf('#/sites') === 0) S.stageFilter = StageNav.urlStage;
   function closeAll() { C.closeModal(); C.closeDrawer(); Companion.closePop(); S.menu = null; }
   function go(h) { if (location.hash === h) onRoute(); else location.hash = h; }
 
@@ -62,6 +69,11 @@
   const colVal = (s, k) => k === 'location' ? D.locationOf(s.v) : k === 'created' ? s.created || '' : k === 'modified' ? s.modified || '' : k === 'rt' ? s.rt : k === 'stage' ? (C.currentStage(s) || { label: 'zz' }).label : String(s.v[k] || '');
   function renderList() {
     let rows = sites.filter((s) => !S.search || (JSON.stringify(s.v) + s.rt + D.locationOf(s.v)).toLowerCase().indexOf(S.search.toLowerCase()) >= 0);
+    const stOfRow = (x) => { const c = C.currentStage(x); return c ? c.id : 'infringing'; };
+    const stCounts = {}; rows.forEach((x) => { const k = stOfRow(x); stCounts[k] = (stCounts[k] || 0) + 1; });
+    const allRows = rows.length;
+    if (S.stageFilter) rows = rows.filter((x) => stOfRow(x) === S.stageFilter);
+    const chipsHtml = '<div class="sfchips" role="group" aria-label="Filter sites by current lifecycle stage (proposal)"><span class="sfchips__l">Current stage <span class="badge badge--proposal">Proposal</span></span><button class="sfchip' + (S.stageFilter ? '' : ' is-sel') + '" data-sf="" aria-pressed="' + (!S.stageFilter) + '">All (' + allRows + ')</button>' + D.stages('FDSC').map((x) => '<button class="sfchip' + (S.stageFilter === x.id ? ' is-sel' : '') + '" data-sf="' + x.id + '" aria-pressed="' + (S.stageFilter === x.id) + '">' + esc(x.label) + ' (' + (stCounts[x.id] || 0) + ')</button>').join('') + (S.stageFilter ? ' <a class="btn btn--sm" href="../v2-bulk-grid/index.html?stage=' + S.stageFilter + '">Bulk edit these in the grid</a>' : '') + '</div>';
     rows.sort((a, b) => (colVal(a, S.sort).toLowerCase() > colVal(b, S.sort).toLowerCase() ? 1 : -1) * S.dir);
     const th = (k, l, extra) => '<th><button class="th-sort" data-sort="' + k + '">' + l + (S.sort === k ? (S.dir > 0 ? ' ▲' : ' ▼') : '') + '</button>' + (extra || '') + '</th>';
     const sel = rows.filter((s) => S.sel.has(s.id)).length;
@@ -72,7 +84,7 @@
       '<div class="lv-tools"><input id="listSearch" type="search" placeholder="Search this list..." value="' + esc(S.search) + '" aria-label="Search this list"><span class="sp"></span>' +
       ['gear:List View Controls', 'table:Select Fields to Display (toggles the proposed Record Type and Current Stage columns)', 'refresh:Refresh', 'listv:Display as', 'pencil:Inline editing', 'chart:Show charts', 'filter:Filters'].map((x) => { const [i, t] = x.split(':'); return '<button class="iconbtn' + (i === 'table' && prop ? ' is-on' : '') + '" data-lvbtn="' + i + '" title="' + t + '" aria-label="' + t + '">' + ic(i, '', 14) + '</button>'; }).join('') + '</div>' +
       '<div class="lv-note">Layout and column order follow the live CMCS Sites list (owner-supplied screenshot). <span class="badge badge--screen">Owner-supplied (screenshot)</span> ' + (prop ? 'Proposed columns shown (Record Type, Current Stage).' : 'Proposed columns (Record Type, Current Stage) are hidden: use the table icon to show them.') + '</div>' +
-      '<div class="lv-table"><table class="tbl"><thead><tr><th style="width:30px"><input type="checkbox" id="selAll" aria-label="Select all"' + (rows.length && sel === rows.length ? ' checked' : '') + '></th><th style="width:30px"></th>' +
+      chipsHtml + '<div class="lv-table"><table class="tbl"><thead><tr><th style="width:30px"><input type="checkbox" id="selAll" aria-label="Select all"' + (rows.length && sel === rows.length ? ' checked' : '') + '></th><th style="width:30px"></th>' +
       th('code', 'Site Number', colQ('code')) + th('location', 'Location') + th('status', 'Status', colQ('status')) + th('siteType', 'Site Type', colQ('siteType')) + th('vendor', 'Vendor', colQ('vendor')) + th('zone', 'Zone') + th('region', 'Region') + th('created', 'Created Date') + th('modified', 'Last Modified Date') +
       (prop ? th('rt', 'Record Type (proposed)') + th('stage', 'Current Stage (proposed)') : '') + '<th style="width:40px"></th></tr></thead><tbody>' +
       (rows.length ? rows.map((s, i) => { const c = C.currentStage(s); return '<tr><td><input type="checkbox" data-sel="' + s.id + '"' + (S.sel.has(s.id) ? ' checked' : '') + ' aria-label="Select ' + esc(s.v.code) + '"></td><td>' + (i + 1) + '</td><td><a href="#/site/' + s.id + '">' + esc(s.v.code) + '</a></td><td>' + esc(D.locationOf(s.v)) + '</td><td>' + esc(s.v.status || '') + '</td><td>' + esc(s.v.siteType || '') + '</td><td>' + (s.v.vendor ? '<a href="#" onclick="return false">' + esc(s.v.vendor) + '</a>' : '') + '</td><td>' + esc(s.v.zone || '') + '</td><td>' + esc(s.v.region || '') + '</td><td>' + C.fmtDateTime(s.created) + '</td><td>' + C.fmtDateTime(s.modified) + '</td>' +
@@ -194,6 +206,10 @@
     if (r.name === 'site' && byId(r.id)) app.innerHTML = renderSite(byId(r.id));
     else if (r.name === 'home') app.innerHTML = '<main class="page"><div class="card"><div class="card__body empty">Home is not part of this mockup. <a href="#/sites">Go to Sites</a></div></div></main>';
     else app.innerHTML = renderList();
+    if (window.StageNav) {
+      if (r.name === 'site' && byId(r.id)) { const site = byId(r.id), state = {}, missing = {}; stOf(site).forEach((x) => { state[x.id] = stageStatus(site, x.id); const need = Array.from(C.reqKeys(site.rt, x.id, site.v)).filter((k) => C.isEmpty(site.v[k])).length + C.childProblems(site, x.id).length; if (need && state[x.id] !== 'complete') missing[x.id] = need; }); StageNav.context({ rt: site.rt, branch: 'commission', stage: S.stage, site: site.v.code, state: state, missing: missing }); }
+      else StageNav.context({ stage: S.stageFilter || null, site: null });
+    }
     if (S.flash) { const el = $('[data-k="' + S.flash + '"]'); if (el) { el.scrollIntoView({ block: 'center' }); el.classList.add('flash'); const i = el.querySelector('input,select'); if (i && S.editing) i.focus(); } S.flash = null; }
   }
 
@@ -302,7 +318,7 @@
   function moreInfo() { C.modal({ title: 'Please add Enforcement Device(s)', body: '<p>The live page shows this banner when a Site has no Enforcement Device. The validation rule behind it is not known. ' + qb({ banner: 'device' }) + '</p><p style="margin-top:8px"><strong>Assumption (Proposal):</strong> a Site needs one device per required type for its program: ' + D.DEVTYPES.FDSC.join(', ') + ' (FDSC), and similar for other programs. The lifecycle stage Camera Installed cannot be completed without them.</p>', footer: '<button class="btn" data-mclose2>Close</button>' }); $('[data-mclose2]').onclick = C.closeModal; }
 
   /* ---------- events ---------- */
-  const SEL = '[data-stage],[data-tab],[data-sec],[data-edit],[data-cancel],[data-save],[data-complete],[data-reopen],[data-upload],[data-rmfile],[data-goto],[data-delete],[data-sort],[data-stub],[data-follow],[data-menu],[data-open],[data-child-new],[data-child-edit],[data-child-del],[data-viewall],[data-moreinfo],[data-rtab],[data-lvbtn],#newBtn';
+  const SEL = '[data-sf],[data-stage],[data-tab],[data-sec],[data-edit],[data-cancel],[data-save],[data-complete],[data-reopen],[data-upload],[data-rmfile],[data-goto],[data-delete],[data-sort],[data-stub],[data-follow],[data-menu],[data-open],[data-child-new],[data-child-edit],[data-child-del],[data-viewall],[data-moreinfo],[data-rtab],[data-lvbtn],#newBtn';
   document.addEventListener('click', (e) => {
     const t = e.target.closest(SEL);
     if (!t) { if (S.menu) { S.menu = null; render(); } return; }
@@ -315,6 +331,7 @@
     if (t.dataset.delete && S.route.name === 'list') { S.menu = null; return confirmDelete(byId(t.dataset.delete)); }
     const site = S.route.name === 'site' ? byId(S.route.id) : null; if (!site) return;
     S.menu = S.menu && !t.dataset.menu ? null : S.menu;
+    if (t.dataset.sf !== undefined) { S.stageFilter = t.dataset.sf; render(); return; }
     if (t.dataset.stage) { S.stage = t.dataset.stage; S.tab = 'details'; S.summary = null; render(); const sc = $('#stagecard'); if (sc) sc.scrollIntoView({ block: 'nearest' }); }
     else if (t.dataset.tab) { S.tab = t.dataset.tab; render(); }
     else if (t.dataset.sec) { S.closed[t.dataset.sec] = !S.closed[t.dataset.sec]; $('#sec_' + t.dataset.sec).classList.toggle('is-closed'); }

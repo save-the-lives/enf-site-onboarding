@@ -17,6 +17,7 @@
 
   const rowsFor = () => sites.filter((s) => s.rt === G.rt);
   const dv = (s) => (G.draft[s.id] = G.draft[s.id] || JSON.parse(JSON.stringify(s.v)));
+  if (window.StageNav) StageNav.page((sid, nav) => { if (nav.branch !== 'commission' || D.STAGE_REQ[sid] === undefined) return false; G.stage = sid; G.flashCol = null; G.errs = {}; render(); return true; }, { onProgram: (n) => { G.rt = n.rt; G.sel.clear(); render(); } });
   const stageObj = (s) => D.stages(s.rt).filter((x) => x.id === G.stage)[0];
   const stageStatus = (s) => { const st = stageObj(s); if (!st) return ''; if (s.done.indexOf(st.id) >= 0) return 'Complete'; const c = C.currentStage(s); return c && c.id === st.id ? 'Current' : 'Not started'; };
   function cols() {

@@ -33,6 +33,7 @@
   }
   filters(); list(); backToQuestion(document.getElementById('main').children[1] ? document.getElementById('main') : document.getElementById('main'));
   document.addEventListener('input', (e) => { if (e.target.id === 'f_text') { F.text = e.target.value; list(); } });
+  if (window.StageNav) { StageNav.page((sid, nav) => { if (nav.branch !== 'commission') { F.stage = ''; filters(); list(); return false; } F.stage = sid; filters(); list(); return true; }); if (StageNav.urlStage && BL.STAGE_NAME[StageNav.urlStage]) F.stage = StageNav.urlStage; }
   document.addEventListener('change', (e) => { const m = /^f_(\w+)$/.exec(e.target.id || ''); if (m && m[1] !== 'text') { F[m[1]] = e.target.value; list(); } });
   document.addEventListener('click', (e) => { const b = e.target.closest('[data-t]'); if (b) document.getElementById(b.dataset.t).classList.toggle('is-open'); });
   window.addEventListener('hashchange', list);

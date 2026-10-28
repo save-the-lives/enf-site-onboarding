@@ -156,3 +156,20 @@ button{font:inherit;color:inherit;cursor:pointer}
 .ann-on .card:has(> .card__head .badge--proposal){border-style:dashed;border-color:#dd7a01;background:#fffdf6}
 .ann-off .qb,.ann-off .badge--proposal,.ann-off .badge--screen,.ann-off .badge--open,.ann-off .layer__h,.ann-off [data-ann],.ann-off .sel-note--ann,.ann-off #rpBtn,.ann-off #rpBox,.ann-off #storiesLink{display:none!important}
 .ann-off .layer{border:0;background:transparent;padding:0}
+/* stage navigator */
+.sn{background:#fff;border-bottom:1px solid #e5e5e5;padding:6px 16px;font-size:12px}
+.sn__row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.sn__t{font-size:12px}
+.sn__f{display:inline-flex;align-items:center;gap:4px;color:#444}.sn__f select{height:26px;border:1px solid #c9c9c9;border-radius:4px;background:#fff;font:inherit;font-size:12px;padding:0 4px}
+.sn__ol{display:flex;list-style:none;margin:0;padding:0;gap:4px;flex-wrap:wrap;flex:1}
+.sn__b{display:inline-flex;align-items:center;gap:5px;border:1px solid #c9c9c9;border-radius:14px;background:#fff;font:inherit;font-size:12px;padding:2px 8px 2px 3px;cursor:pointer;color:#181818}
+.sn__b:focus-visible{outline:2px solid #0176d3;outline-offset:2px}
+.sn__n{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:9px;background:#e5e5e5;font-size:11px;font-weight:700}
+.sn--complete .sn__n{background:#2e844a;color:#fff}.sn--current .sn__n{background:#0176d3;color:#fff}
+.sn--incomplete{color:#444;border-style:dashed}
+.sn__b.is-sel{border-color:#0176d3;box-shadow:inset 0 0 0 1px #0176d3;background:#eef4ff;font-weight:700}
+.sn__c{display:inline-flex;gap:3px}.sn__c i,.sn__site i{font-style:normal;font-size:10px;font-weight:700;border-radius:8px;padding:0 5px;line-height:15px}
+.sn__q{background:#0176d3;color:#fff}.sn__s{background:#e0f2f7;color:#014486;border:1px solid #8fd0e3}.sn__m{background:#fe9339;color:#181818}
+.sn__k{color:#706e6b;font-size:11px}.sn__site{margin-top:4px;color:#444;font-size:11px}
+.ann-off .sn__c,.ann-off .sn__site{display:none}
+@media(max-width:700px){.sn__l{max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sn__k{display:none}}
+.ann-off .sfchips{display:none}

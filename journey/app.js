@@ -34,7 +34,12 @@
     sel.value = rt;
   }
   document.addEventListener('click', (e) => { const b = e.target.closest('[data-s]'); if (b) { cur = b.dataset.s; history.replaceState(null, '', '#' + cur); render(); } });
-  sel.onchange = () => { rt = sel.value; render(); };
+  sel.onchange = () => { rt = sel.value; if (window.StageNav) StageNav.context({ rt: rt }); render(); };
+  if (window.StageNav) {
+    const pick = (sid) => { const j = BL.JOURNEY.filter((x) => x.id === sid || x.rec === sid)[0]; if (j) { cur = j.id; history.replaceState(null, '', location.search + '#' + cur); render(); } };
+    StageNav.page((sid) => { pick(sid); return true; }, { onProgram: (n) => { rt = n.rt; sel.value = rt; render(); } });
+    if (StageNav.urlStage) pick(StageNav.urlStage);
+  }
   window.addEventListener('hashchange', () => { cur = location.hash.slice(1); render(); });
   render(); backToQuestion(document.getElementById('main'));
 })();
