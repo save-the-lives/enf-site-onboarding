@@ -1,17 +1,41 @@
 <!doctype html>
 <html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Open questions - D141 Site Setup</title>
-<link rel="stylesheet" href="../shared/sf.css">
+<link rel="stylesheet" href="../shared/sf.css"><link rel="stylesheet" href="../backlog/backlog.css">
 </head><body>
 <div id="top"></div>
-<main class="page">
-  <div class="pagehead"><span class="objicon" id="oi"></span><div style="flex:1"><div class="sub">D141 Site Setup</div><h1>Open questions</h1></div><span class="badge badge--skel">Skeleton - in progress</span></div>
-  <div class="card"><div class="card__body"><p>Placeholder. Will hold the question index; questions also appear in context.</p><p style="margin-top:8px"><a href="../index.html">Back to prototype hub</a></p></div></div>
+<main class="page" id="main">
+  <div class="pagehead"><span class="objicon" id="oi"></span><div style="flex:1"><div class="sub">D141 Site Setup</div><h1>Open questions (index)</h1></div><span class="badge badge--open">Index only</span></div>
+  <div class="card"><div class="card__body"><span class="sel-note">This is an <strong>index</strong>. Each question also appears in context, as a blue <span class="qb" style="margin:0">?</span> badge at the field, stage, story or journey step it concerns. Use the chips to jump to that context; the popover there links back here. Answers are stored in this browser only (mockup).</span></div></div>
+  <div class="card"><table class="tbl" id="qt"></table></div>
 </main>
-<script src="../shared/data.js"></script><script src="../shared/core.js"></script>
+<script src="../shared/data.js"></script><script src="../shared/core.js"></script><script src="../shared/backlog.js"></script><script src="../shared/companion.js"></script><script src="../shared/pages.js"></script>
 <script>
-document.getElementById('top').innerHTML = Core.chrome({active:'q',tabs:[{id:'hub',label:'Prototype hub',href:'../index.html'},{id:'v1',label:'1 Record page',href:'../v1-record-page/index.html'},{id:'v2',label:'2 Bulk grid',href:'../v2-bulk-grid/index.html'},{id:'v3',label:'3 Guided flow',href:'../v3-guided-flow/index.html'},{id:'st',label:'Stories',href:'../backlog/index.html'},{id:'jr',label:'Journey',href:'../journey/index.html'},{id:'q',label:'Questions',href:'../questions/index.html'}]});
-document.getElementById('oi').innerHTML = Core.icon('camera','',18);
-Core.footer({variation:'Open questions',hub:'../index.html',note:'Placeholder. Will hold the question index; questions also appear in context.'});
+(function () {
+  pageShell('q', 'Open questions', 'Index of open questions; every row deep-links to the in-context location.');
+  document.getElementById('oi').innerHTML = Core.icon('question', '', 18);
+  const esc = Core.esc;
+  function chips(q) {
+    const p = q.primary, at = q.at, out = [];
+    (at.field || []).forEach((k) => out.push(Companion.chip('Field: ' + Core.fmap[k].l, BL.href({ t: 'record', rt: p.rt || 'FDSC', field: k, stage: p.stage, q: q.id }, '../'))));
+    (at.stage || []).forEach((s) => out.push(Companion.chip('Stage: ' + BL.STAGE_NAME[s], BL.href({ t: 'record', rt: p.rt || 'FDSC', stage: s, q: q.id }, '../'))));
+    (at.story || []).forEach((s) => out.push(Companion.chip('Story ' + s, BL.href({ t: 'story', id: s, q: q.id }, '../'))));
+    (at.journey || []).forEach((s) => { const j = BL.JOURNEY.filter((x) => x.id === s)[0]; out.push(Companion.chip('Journey: ' + (j ? j.name : 'stage order'), BL.href({ t: 'journey', step: j ? s : 'planned', q: q.id }, '../'))); });
+    return '<div class="chips">' + out.join('') + '</div>';
+  }
+  function render() {
+    const ans = BL.answers(); const tgt = location.hash.replace('#', '');
+    document.getElementById('qt').innerHTML = '<thead><tr><th>ID</th><th>Question</th><th>Current assumption (Proposal)</th><th>Who can answer</th><th>Status</th><th>Where it appears (click to open in context)</th></tr></thead><tbody>' +
+      BL.QUESTIONS.map((q) => { const a = ans[q.id]; return '<tr id="' + q.id + '"' + (tgt === q.id ? ' style="outline:2px solid #0176d3"' : '') + '><td><strong>' + q.id + '</strong></td><td><strong>' + esc(q.q) + '</strong><div class="sel-note">' + esc(q.why) + '</div></td><td>' + esc(q.assume) + '</td><td>' + esc(q.who) + '</td><td><span class="badge ' + (a && a.status === 'Answered' ? 'badge--ok' : 'badge--open') + '">' + (a && a.status === 'Answered' ? 'Answered' : 'Open') + '</span>' + (a ? '<div class="sel-note">' + esc(a.text) + '</div>' : '') + '<div><button class="link-btn" data-ans="' + q.id + '">' + (a ? 'Edit answer' : 'Record answer') + '</button></div></td><td>' + chips(q) + '<p style="margin-top:6px"><a class="btn btn--brand btn--sm" href="' + BL.href(q.primary, '../') + '&q=' + q.id + '">Open in context</a></p></td></tr>'; }).join('') + '</tbody>';
+    const t = document.getElementById(tgt); if (t) t.scrollIntoView({ block: 'center' });
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-ans]'); if (!b) return; const q = BL.QUESTIONS.filter((x) => x.id === b.dataset.ans)[0]; const cur = BL.answers()[q.id] || {};
+    Core.modal({ title: 'Answer ' + q.id, body: '<p style="margin-bottom:8px"><strong>' + esc(q.q) + '</strong></p><div class="fe fe--edit"><label class="fe__label" for="at">Status</label><select id="as"><option>Open</option><option' + (cur.status === 'Answered' ? ' selected' : '') + '>Answered</option></select></div><div class="fe fe--edit"><label class="fe__label" for="at">Answer</label><input type="text" id="at" value="' + esc(cur.text || '') + '" placeholder="Short answer"><div class="fe__help" id="aerr"></div></div><p class="sel-note">Stored in this browser only.</p>', footer: '<button class="btn" data-mclose2>Cancel</button><button class="btn btn--brand" id="aSave">Save</button>' });
+    document.querySelector('[data-mclose2]').onclick = Core.closeModal;
+    document.getElementById('aSave').onclick = () => { const s = document.getElementById('as').value, t = document.getElementById('at').value.trim(); if (s === 'Answered' && !t) { document.getElementById('aerr').parentNode.classList.add('has-error'); document.getElementById('aerr').textContent = 'Enter the answer.'; return; } BL.setAnswer(q.id, s, t); Core.closeModal(); render(); Core.toast(q.id + ' saved.', 'success'); };
+  });
+  window.addEventListener('hashchange', render); render();
+})();
 </script>
 </body></html>

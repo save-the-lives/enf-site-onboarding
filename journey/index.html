@@ -1,17 +1,15 @@
 <!doctype html>
 <html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>User journey - D141 Site Setup</title>
-<link rel="stylesheet" href="../shared/sf.css">
+<link rel="stylesheet" href="../shared/sf.css"><link rel="stylesheet" href="../v1-record-page/v1.css"><link rel="stylesheet" href="journey.css">
 </head><body>
 <div id="top"></div>
-<main class="page">
-  <div class="pagehead"><span class="objicon" id="oi"></span><div style="flex:1"><div class="sub">D141 Site Setup</div><h1>User journey</h1></div><span class="badge badge--skel">Skeleton - in progress</span></div>
-  <div class="card"><div class="card__body"><p>Placeholder. Will hold the journey map from site identified to enforcement live with decommission and refurbish branches.</p><p style="margin-top:8px"><a href="../index.html">Back to prototype hub</a></p></div></div>
+<main class="page" id="main">
+  <div class="pagehead"><span class="objicon" id="oi"></span><div style="flex:1"><div class="sub">D141 Site Setup</div><h1>User journey: site planned to enforcement live</h1></div><label class="sel-note" style="color:#444">Program <select id="jrt" style="height:30px"></select></label><span class="badge badge--proposal">Proposed names - to confirm</span></div>
+  <div class="pathrow"><div class="path"><ul class="path__nav" id="jpath"></ul></div></div>
+  <div class="branches" id="branches"></div>
+  <div id="detail"></div>
 </main>
-<script src="../shared/data.js"></script><script src="../shared/core.js"></script>
-<script>
-document.getElementById('top').innerHTML = Core.chrome({active:'jr',tabs:[{id:'hub',label:'Prototype hub',href:'../index.html'},{id:'v1',label:'1 Record page',href:'../v1-record-page/index.html'},{id:'v2',label:'2 Bulk grid',href:'../v2-bulk-grid/index.html'},{id:'v3',label:'3 Guided flow',href:'../v3-guided-flow/index.html'},{id:'st',label:'Stories',href:'../backlog/index.html'},{id:'jr',label:'Journey',href:'../journey/index.html'},{id:'q',label:'Questions',href:'../questions/index.html'}]});
-document.getElementById('oi').innerHTML = Core.icon('camera','',18);
-Core.footer({variation:'User journey',hub:'../index.html',note:'Placeholder. Will hold the journey map from site identified to enforcement live with decommission and refurbish branches.'});
-</script>
+<script src="../shared/data.js"></script><script src="../shared/core.js"></script><script src="../shared/backlog.js"></script><script src="../shared/companion.js"></script><script src="../shared/pages.js"></script>
+<script src="app.js"></script>
 </body></html>
