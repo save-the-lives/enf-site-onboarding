@@ -1,3 +1,37 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>D141 Site Onboarding Mockup</title>
-<style>body{font-family:"Salesforce Sans",Arial,sans-serif;background:#f3f3f3;color:#181818;margin:0}header{background:#0176d3;color:#fff;padding:14px 24px;font-size:18px}main{max-width:720px;margin:32px auto;padding:0 16px}.card{background:#fff;border:1px solid #c9c9c9;border-radius:.25rem;padding:20px}.badge{background:#ffb75d;border-radius:10px;padding:2px 10px;font-size:12px}</style></head>
-<body><header>D141 Site Onboarding (CMCS mockup)</header><main><div class="card"><h2>Skeleton <span class="badge">in progress</span></h2><p>Salesforce Lightning-style mockup for capturing enforcement camera site details. Variations, user stories, journey map and open questions are being added. All data is fake.</p></div></main></body></html>
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>D141 Site Setup - Prototype Hub</title>
+<link rel="stylesheet" href="shared/sf.css">
+</head><body>
+<div id="top"></div>
+<main class="page">
+  <div class="pagehead"><span class="objicon" id="hubicon"></span><div style="flex:1"><div class="sub">D141 Site Setup</div><h1>Prototype hub</h1></div><span class="badge badge--proposal">Mockup only - fake data - Proposal unless owner-stated</span></div>
+  <div class="card"><div class="card__body">
+    <p>Capturing D141 camera site data directly in Salesforce (CMCS) with validation at the point of entry, instead of an Excel form that is re-keyed. The spreadsheet layout does not have to be copied: the outcome is validated, complete site details feeding CMCS. Each variation below is a separate, Lightning-styled prototype of the same data model (five record types: FDSC, RLSC, BPES, ASC, ODES).</p>
+  </div></div>
+  <h2 style="margin:16px 0 8px;font-size:16px">Capture variations</h2>
+  <div class="tiles">
+    <a class="tile" href="v1-record-page/index.html"><h3>1. Guided single-site record page <span class="badge badge--skel">Skeleton - in progress</span></h3>
+      <p>Site list, New Site with record type picker, then a Lightning record page with a Path across the lifecycle, stage-gated sections, inline edit and attachments.</p>
+      <dl><dt>Use it for</dt><dd>Entering or maintaining one site, following it through each lifecycle stage.</dd><dt>Prefer when</dt><dd>A TPM is working a single site over weeks and needs the stage gates and attachments in one place.</dd></dl></a>
+    <a class="tile" href="v2-bulk-grid/index.html"><h3>2. Bulk grid entry <span class="badge badge--skel">Skeleton - in progress</span></h3>
+      <p>Editable grid of several sites with per-row validation, a bulk action bar (Commission, Decommission, Refurbish, mark stage complete, set value).</p>
+      <dl><dt>Use it for</dt><dd>Entering or changing many sites at once (a batch of installs, a decommission run, a refurbishment programme).</dd><dt>Prefer when</dt><dd>The same few fields change across many sites and speed matters more than per-site guidance.</dd></dl></a>
+    <a class="tile" href="v3-guided-flow/index.html"><h3>3. Guided screen flow <span class="badge badge--skel">Skeleton - in progress</span></h3>
+      <p>Step-by-step wizard (Screen Flow style): program, activity, location, equipment, network, school zone, review. One concern per screen with validation before Next.</p>
+      <dl><dt>Use it for</dt><dd>First-time creation of a site by someone who does not know the data model.</dd><dt>Prefer when</dt><dd>Fewer mistakes matter more than speed; new or occasional users.</dd></dl></a>
+  </div>
+  <h2 style="margin:16px 0 8px;font-size:16px">Companion layer</h2>
+  <div class="tiles">
+    <a class="tile" href="backlog/index.html"><h3>User stories <span class="badge badge--skel">Skeleton - in progress</span></h3><p>Living backlog with Given/When/Then acceptance criteria, linked to screens, fields and stages. Excel export.</p></a>
+    <a class="tile" href="journey/index.html"><h3>User journey <span class="badge badge--skel">Skeleton - in progress</span></h3><p>Site identified to enforcement live, with decommission and refurbish branches. Proposed stage names, to confirm.</p></a>
+    <a class="tile" href="questions/index.html"><h3>Open questions <span class="badge badge--skel">Skeleton - in progress</span></h3><p>Index of questions; each also appears in context at the field, stage, story or journey step it concerns.</p></a>
+  </div>
+</main>
+<script src="shared/data.js"></script><script src="shared/core.js"></script>
+<script>
+document.getElementById('top').innerHTML = Core.chrome({active:'hub',tabs:[{id:'hub',label:'Prototype hub',href:'index.html'},{id:'v1',label:'1 Record page',href:'v1-record-page/index.html'},{id:'v2',label:'2 Bulk grid',href:'v2-bulk-grid/index.html'},{id:'v3',label:'3 Guided flow',href:'v3-guided-flow/index.html'},{id:'st',label:'Stories',href:'backlog/index.html'},{id:'jr',label:'Journey',href:'journey/index.html'},{id:'q',label:'Questions',href:'questions/index.html'}]});
+document.getElementById('hubicon').innerHTML = Core.icon('camera','',18);
+Core.footer({variation:'Hub',hub:'index.html',note:'Hub of prototype variations. All are proposals.'});
+</script>
+</body></html>
