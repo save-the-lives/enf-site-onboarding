@@ -95,3 +95,27 @@
 .sfchips__l{font-weight:700;margin-right:4px}
 .sfchip{border:1px solid #c9c9c9;border-radius:14px;background:#fff;font:inherit;font-size:12px;padding:3px 10px;cursor:pointer;color:#181818}
 .sfchip.is-sel{border-color:#0176d3;background:#eef4ff;font-weight:700;box-shadow:inset 0 0 0 1px #0176d3}.sfchip:focus-visible{outline:2px solid #0176d3;outline-offset:2px}
+
+/* view switcher, attention strip, readiness, stage accordions (proposal) */
+.viewbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 10px;font-size:12px}
+.viewbar__l{font-weight:700;margin-right:2px}.viewbar__h{color:#444;margin-left:6px}
+.viewbar__b{border:1px solid #c9c9c9;background:#fff;border-radius:4px;font:inherit;font-size:12px;padding:3px 12px;cursor:pointer;color:#181818}
+.viewbar__b.is-sel{background:#0176d3;border-color:#0176d3;color:#fff;font-weight:700}.viewbar__b:focus-visible{outline:2px solid #0176d3;outline-offset:2px}
+.attn{background:#fff7f4;border:1px solid #ea001e;border-left-width:4px;border-radius:4px;padding:8px 12px;margin:0 0 10px;font-size:13px}
+.attn--ok{background:#f3faf4;border-color:#2e844a}.attn ul{margin:4px 0 0 18px;padding:0}.attn li{padding:1px 0}
+.attn__err .link-btn{color:#ba0517}.attn__warn .link-btn{color:#8a5a00}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.readiness .check li{align-items:flex-start}
+.stgacc{border:1px solid #dddbda;border-radius:4px;background:#fff;margin-bottom:8px}
+.stgacc__h{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;background:#f3f3f3;border:0;font:inherit;cursor:pointer;text-align:left;border-radius:4px}
+.stgacc__h:focus-visible{outline:2px solid #0176d3;outline-offset:-2px}.stgacc__sp{flex:1}
+.stgacc__s{font-size:11px;font-weight:700;border-radius:10px;padding:1px 8px;background:#e5e5e5}
+.stgacc.is-complete .stgacc__s{background:#2e844a;color:#fff}.stgacc.is-current .stgacc__s{background:#0176d3;color:#fff}
+.stgacc.is-current{border-color:#0176d3}.stgacc.is-incomplete{border-style:dashed}
+.stgacc__m{font-style:normal;font-size:11px;font-weight:700;border-radius:8px;padding:0 6px;background:#fe9339}
+.stgacc__b{padding:8px 12px}
+/* compact view */
+[data-view=compact] .fe{padding-top:1px;padding-bottom:1px;font-size:12px;min-height:0}
+[data-view=compact] .sec__h{padding:4px 12px}[data-view=compact] .sec__b{gap:0 16px;padding:2px 12px}
+[data-view=compact] .stagecard__b,[data-view=compact] .card__body{padding-top:6px;padding-bottom:6px}
+[data-view=compact] .hl{padding-bottom:6px}

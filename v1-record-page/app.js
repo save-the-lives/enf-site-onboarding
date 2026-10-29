@@ -3,12 +3,16 @@
   const $ = C.$, $$ = C.$$;
   let sites = C.store.load();
   sites.forEach((s) => { ['lanes', 'programs', 'devices', 'certs', 'files'].forEach((k) => { s[k] = s[k] || []; }); });
-  const S = { route: { name: 'list' }, editing: false, draft: null, errors: {}, warns: {}, enforce: new Set(), summary: null, stage: null, tab: 'details', closed: {}, search: '', sort: 'code', dir: 1, flash: null, sel: new Set(), propCols: false, rtab: 'programs', menu: null, follow: false, stageFilter: '' };
+  const S = { route: { name: 'list' }, editing: false, draft: null, errors: {}, warns: {}, enforce: new Set(), summary: null, stage: null, tab: 'details', closed: {}, search: '', sort: 'code', dir: 1, flash: null, sel: new Set(), propCols: false, rtab: 'programs', menu: null, follow: false, stageFilter: '', view: 'standard', stgOpen: {}, compactInit: false };
   const persist = () => C.store.save(sites);
   const touch = (site) => { site.modified = new Date().toISOString(); persist(); };
   const byId = (id) => sites.filter((s) => s.id === id)[0];
   const stOf = (site) => D.stages(site.rt);
   const fdef = (k) => C.fmap[k];
+  const VIEWS = [['standard', 'Standard'], ['compact', 'Compact'], ['stage', 'Stage-focused']];
+  const VKEY = 'enf-d141-view';
+  try { const v = localStorage.getItem(VKEY); if (VIEWS.some((x) => x[0] === v)) S.view = v; } catch (e) { /* ignore */ }
+  const CTABS = [['details', 'Details'], ['grp1', 'Assets, Network and Survey'], ['files', 'Files/Attachments'], ['grp2', 'History'], ['cases', 'All Cases']];
   const TABS = [['details', 'Details'], ['assets', 'Additional Assets'], ['network', 'Network'], ['survey', 'Site Survey'], ['files', 'Files/Attachments'], ['history', 'Site History'], ['edit', 'Edit History'], ['cases', 'All Cases']];
   const SQ = { cases: '#f2a03a', certs: '#9b72e0', lanes: '#3ba755', prog: '#1b96ff', dev: '#e3447a' };
 
@@ -37,6 +41,7 @@
       const sts = stOf(site);
       S.stage = r.p.stage && sts.some((s) => s.id === r.p.stage) ? r.p.stage : (prev.id === r.id && S.stage ? S.stage : (C.currentStage(site) || sts[sts.length - 1]).id);
       let tab = r.p.tab === 'related' ? 'files' : r.p.tab; S.tab = tab && TABS.some((t) => t[0] === tab) ? tab : (prev.id === r.id ? S.tab : 'details');
+      if (r.p.view && VIEWS.some((x) => x[0] === r.p.view)) setViewState(r.p.view);
       S.flash = r.p.field || null;
       if (!r.p.stage && r.p.field) { const ds = sts.filter((x) => (x.dates || []).indexOf(r.p.field) >= 0)[0]; if (ds) S.stage = ds.id; }
       if (r.p.field && fdef(r.p.field)) { const f = fdef(r.p.field); if (f.sec === 'net') S.tab = 'network'; else if (f.sec !== 'life') { S.tab = 'details'; S.closed[f.sec] = false; } }
@@ -163,10 +168,10 @@
     const chk = '<div class="card" style="border-color:#dd7a01"><div class="card__head"><h2>Required for: ' + esc(st.label) + '</h2><span class="badge badge--proposal">Proposal</span></div><div class="card__body"><ul class="check">' +
       keys.map((k) => { const f = fdef(k), ok = !C.isEmpty(v[k]) && !S.errors[k]; return '<li>' + ic(ok ? 'success' : 'info', ok ? 'done' : 'todo', 14) + '<a href="#" data-goto="' + k + '">' + esc(f.l) + '</a></li>'; }).join('') +
       (cp.length ? cp.map((c) => '<li>' + ic('info', 'todo', 14) + '<span>' + esc(c.msg) + '</span></li>').join('') : (D.childReq(site.rt, st.id) && Object.keys(D.childReq(site.rt, st.id)).length ? '<li>' + ic('success', 'done', 14) + '<span>Child records complete</span></li>' : '')) + (keys.length || cp.length || Object.keys(D.childReq(site.rt, st.id)).length ? '' : '<li class="sel-note">Nothing beyond the stage date.</li>') + '</ul></div></div>';
-    return '<div class="rail">' + chk +
+    return '<div class="rail">' + chk + (S.view !== 'standard' ? readinessHTML(site) : '') +
       card(SQ.cases, 'info', 'Open Maintenance Cases', 0, '', '<div class="sel-note" style="padding:8px 12px">No open cases. <a href="#" data-stub="Maintenance Cases">(not in mockup)</a></div>', '', qb({ child: 'cases' })) + certs +
-      (noLane ? '<div class="banner" role="alert">' + ic('warning', '', 16) + '<span><strong>Please add Lane(s).</strong> ' + qb({ banner: 'lane' }) + '</span></div>' : '') + lanes + pd +
-      (noDev ? '<div class="banner" role="alert">' + ic('warning', '', 16) + '<span><strong>Please add Enforcement Device(s).</strong> <a href="#" data-moreinfo>More Information</a>' + qb({ banner: 'device' }) + '</span></div>' : '') + '</div>';
+      (S.view !== 'standard' ? '' : noLane ? '<div class="banner" role="alert">' + ic('warning', '', 16) + '<span><strong>Please add Lane(s).</strong> ' + qb({ banner: 'lane' }) + '</span></div>' : '') + lanes + pd +
+      (S.view !== 'standard' ? '' : noDev ? '<div class="banner" role="alert">' + ic('warning', '', 16) + '<span><strong>Please add Enforcement Device(s).</strong> <a href="#" data-moreinfo>More Information</a>' + qb({ banner: 'device' }) + '</span></div>' : '') + '</div>';
   }
 
   /* ---------- files / tabs ---------- */
@@ -178,7 +183,62 @@
         (fl.length ? '<table class="tbl"><thead><tr><th>File name</th><th>Type</th><th>Added</th><th>Size</th><th></th></tr></thead><tbody>' + fl.map((f) => '<tr><td><a href="#" onclick="return false">' + esc(f.name) + '</a></td><td>' + esc(D.FILETYPES[f.type]) + '</td><td>' + C.fmtDate(f.added) + '</td><td>' + Math.round(f.size / 1024) + ' KB</td><td><button class="link-btn" data-rmfile="' + f.id + '">Remove</button></td></tr>').join('') + '</tbody></table>' : '<div class="empty">No files yet. Select Upload Files.</div>') + '</div>'; }).join('');
   }
   function networkHTML(site) { const sec = D.SECTIONS.filter((s) => s.id === 'net')[0]; return '<div class="sel-note" style="padding:8px 16px">Network is a tab on the live page; its current content is unknown. These D141 network columns are placed here as a Proposal. <span class="badge badge--proposal">Proposal</span> ' + qb({ tab: 'network' }) + '</div>' + sectionHTML(Object.assign({}, sec, { tab: null }), site); }
+
+  function setViewState(v) {
+    S.view = v; try { localStorage.setItem(VKEY, v); } catch (e) { /* ignore */ }
+    if (v === 'compact' && !S.compactInit) { S.compactInit = true; D.SECTIONS.forEach((sec) => { if (sec.id !== 'loc') S.closed[sec.id] = true; }); }
+  }
+  function normTab() {
+    const c = S.view === 'compact';
+    if (c) { if (['assets', 'network', 'survey'].indexOf(S.tab) >= 0) S.tab = 'grp1'; else if (['history', 'edit'].indexOf(S.tab) >= 0) S.tab = 'grp2'; }
+    else { if (S.tab === 'grp1') S.tab = 'network'; else if (S.tab === 'grp2') S.tab = 'history'; }
+  }
+  const stubBox = (label, tab) => '<div class="stub">' + esc(label) + ' exists on the live Site page. Not part of this mockup. ' + qb({ tab: tab }) + '</div>';
+  /* Proposal: blocking issues for a site (field errors and warnings, date order, GPS, missing child records) */
+  function issues(site) {
+    const v = site.v, rt = site.rt, out = [], seen = new Set(); const sts = stOf(site), cs = C.currentStage(site) || sts[sts.length - 1], ci = sts.findIndex((x) => x.id === cs.id);
+    const req = new Set(D.ALWAYS_REQ); C.reqKeys(rt, cs.id, v).forEach((k) => req.add(k));
+    const ok = new Set(D.fieldsFor(rt).map((f) => f.k)); const keys = new Set(Array.from(req)); ['dInstalled', 'dDBA', 'dD064', 'dD128', 'dWarn', 'dInf', 'camGps', 'cabGps', 'spdGps'].forEach((k) => { if (ok.has(k)) keys.add(k); });
+    keys.forEach((k) => { const f = fdef(k); if (!f) return; const r = C.check(f, v[k], v, rt, { sites: sites, id: site.id, enforce: req, certs: site.certs }); const m = r.err || r.warn; if (m && !seen.has(k)) { seen.add(k); out.push({ sev: r.err ? 'err' : 'warn', msg: f.l + ': ' + m, key: k }); } });
+    sts.slice(0, ci + 1).forEach((x) => C.childProblems(site, x.id).forEach((cp) => { const id = cp.kind + cp.msg; if (!seen.has(id)) { seen.add(id); out.push({ sev: 'todo', msg: cp.msg, kind: cp.kind, rid: cp.id, preset: /type (.+)\.$/.test(cp.msg) ? RegExp.$1 : '' }); } }));
+    return out;
+  }
+  const issueBtn = (i) => i.key ? '<button class="link-btn" data-goto="' + i.key + '">' + esc(i.msg) + '</button>' : (i.rid ? '<button class="link-btn" data-child-edit="' + i.kind + '|' + i.rid + '">' + esc(i.msg) + '</button>' : '<button class="link-btn" data-child-new="' + i.kind + '"' + (i.preset ? ' data-preset="' + esc(i.preset) + '"' : '') + '>' + esc(i.msg) + '</button>');
+  function attentionHTML(site) {
+    const is = issues(site);
+    return '<div class="attn' + (is.length ? '' : ' attn--ok') + '" role="region" aria-label="Needs attention (proposal)"><strong>' + (is.length ? 'Needs attention (' + is.length + ')' : 'Nothing blocking') + '</strong> <span class="badge badge--proposal">Proposal</span>' + qb({ screen: 'attention' }) + (is.length ? '<ul>' + is.slice(0, 8).map((i) => '<li class="attn__' + i.sev + '">' + (i.sev === 'err' ? '<span class="sr">Error: </span>' : i.sev === 'warn' ? '<span class="sr">Warning: </span>' : '') + issueBtn(i) + '</li>').join('') + (is.length > 8 ? '<li>and ' + (is.length - 8) + ' more</li>' : '') + '</ul>' : '') + '</div>';
+  }
+  function readinessHTML(site) {
+    const is = issues(site), rt = site.rt;
+    const items = [['Lanes', site.lanes.length >= 1, 'Please add Lane(s).', 'lane'], ['Camera Program', site.programs.length >= 1, 'Add a Camera Program.', 'program']];
+    (D.DEVTYPES[rt] || []).forEach((t) => items.push(['Enforcement Device: ' + t, site.devices.some((d) => d.type === t), 'Please add Enforcement Device(s) of type ' + t + '.', 'device', t]));
+    const cIdx = stOf(site).findIndex((x) => x.id === 'cert'), cur0 = C.currentStage(site), curIdx = cur0 ? stOf(site).findIndex((x) => x.id === cur0.id) : 99;
+    if (curIdx >= cIdx) D.certTypes(rt).forEach((t) => items.push(['Certificate ' + t, site.certs.some((c) => c.type === t), 'Add a ' + t + ' Certificate.', 'cert', t]));
+    const dateIs = is.filter((i) => i.key && /^d[A-Z]/.test(i.key)), gpsIs = is.filter((i) => i.key && /Gps$/.test(i.key)), otherIs = is.filter((i) => i.key && !/^d[A-Z]/.test(i.key) && !/Gps$/.test(i.key));
+    let nOk = items.filter((x) => x[1]).length + (dateIs.length ? 0 : 1) + (gpsIs.length ? 0 : 1) + (otherIs.length ? 0 : 1), nAll = items.length + 3;
+    const rows = items.map((x) => '<li>' + (x[1] ? ic('success', 'done', 14) + '<span>' + esc(x[0]) + '</span>' : ic('warning', 'todo', 14) + '<button class="link-btn" data-child-new="' + x[3] + '"' + (x[4] ? ' data-preset="' + esc(x[4]) + '"' : '') + '>' + esc(x[2]) + '</button>') + '</li>');
+    rows.push('<li>' + (dateIs.length ? ic('warning', 'todo', 14) + '<span>Dates: </span>' + dateIs.map((i) => '<button class="link-btn" data-goto="' + i.key + '">' + esc(i.msg) + '</button>').join('; ') : ic('success', 'done', 14) + '<span>Dates in order</span>') + '</li>');
+    rows.push('<li>' + (gpsIs.length ? ic('warning', 'todo', 14) + gpsIs.map((i) => '<button class="link-btn" data-goto="' + i.key + '">' + esc(i.msg) + '</button>').join('; ') : ic('success', 'done', 14) + '<span>Coordinates valid and inside NSW</span>') + '</li>');
+    rows.push('<li>' + (otherIs.length ? ic('warning', 'todo', 14) + '<span>Required fields: </span>' + otherIs.slice(0, 4).map((i) => '<button class="link-btn" data-goto="' + i.key + '">' + esc(i.msg) + '</button>').join('; ') : ic('success', 'done', 14) + '<span>Required fields for the current stage</span>') + '</li>');
+    return '<div class="card readiness"><div class="card__head"><h2>Readiness</h2><span class="badge badge--proposal">Proposal</span>' + qb({ banner: 'ready' }) + '</div><div class="card__body"><p class="sel-note" style="margin-bottom:6px">' + nOk + ' of ' + nAll + ' ready. Replaces the two amber banners; each item opens the fix.</p><ul class="check">' + rows.join('') + '</ul></div></div>';
+  }
+  function stageViewHTML(site) {
+    const sts = stOf(site), placed = new Set(); const all = D.SECTIONS.filter((x) => !x.tab && x.id !== 'sys');
+    const miss = {}; sts.forEach((x) => { miss[x.id] = Array.from(C.reqKeys(site.rt, x.id, site.v)).filter((k) => C.isEmpty(site.v[k])).length + C.childProblems(site, x.id).length; });
+    const body = sts.map((x) => {
+      const keys = C.reqKeys(site.rt, x.id, site.v), mine = all.filter((sec) => !placed.has(sec.id) && D.fieldsFor(site.rt).some((f) => f.sec === sec.id && keys.has(f.k)));
+      mine.forEach((sec) => placed.add(sec.id)); const st = stageStatus(site, x.id), open = S.stgOpen[x.id] !== undefined ? S.stgOpen[x.id] : x.id === S.stage;
+      const net = Array.from(keys).some((k) => (fdef(k) || {}).sec === 'net');
+      return '<div class="stgacc is-' + st + (open ? ' is-open' : '') + '"><button class="stgacc__h" data-stg="' + x.id + '" aria-expanded="' + open + '"><span class="stgacc__s">' + (st === 'complete' ? 'Done' : st === 'current' ? 'Current' : 'Upcoming') + '</span><strong>' + esc(x.label) + '</strong>' + (miss[x.id] && st !== 'complete' ? '<span class="sn__m stgacc__m">' + miss[x.id] + ' to do</span>' : '') + '<span class="stgacc__sp"></span>' + ic('chevrondown', '', 12) + '</button>' +
+        (open ? '<div class="stgacc__b">' + (x.id === S.stage ? stageCardHTML(site) : '<p class="sel-note" style="padding:6px 0">Dates and attachments for this stage: <button class="link-btn" data-stage="' + x.id + '">make it the working stage</button></p>') + mine.map((sec) => sectionHTML(sec, site)).join('') + (net ? '<p class="sel-note">Network fields for this stage are on the <button class="link-btn" data-tab="network">Network tab</button>.</p>' : '') + '</div>' : '') + '</div>';
+    }).join('');
+    const rest = all.filter((sec) => !placed.has(sec.id)), ro = S.stgOpen._rest;
+    return body + (rest.length ? '<div class="stgacc' + (ro ? ' is-open' : '') + '"><button class="stgacc__h" data-stg="_rest" aria-expanded="' + !!ro + '"><span class="stgacc__s">Any time</span><strong>Other details (not tied to a stage)</strong><span class="stgacc__sp"></span>' + ic('chevrondown', '', 12) + '</button>' + (ro ? '<div class="stgacc__b">' + rest.map((sec) => sectionHTML(sec, site)).join('') + '</div>' : '') + '</div>' : '') + sectionHTML({ id: 'sys' }, site);
+  }
   function tabBody(site) {
+    if (S.tab === 'grp1') return (S.summary ? summaryHTML() : '') + networkHTML(site) + stubBox('Additional Assets', 'assets') + stubBox('Site Survey', 'survey');
+    if (S.tab === 'grp2') return stubBox('Site History', 'history') + stubBox('Edit History', 'edit');
+    if (S.tab === 'details' && S.view === 'stage') return (S.summary ? summaryHTML() : '') + stageViewHTML(site);
     if (S.tab === 'details') return (S.summary ? summaryHTML() : '') + stageCardHTML(site) + D.SECTIONS.map((sec) => sectionHTML(sec, site)).join('');
     if (S.tab === 'files') return filesHTML(site);
     if (S.tab === 'network') return (S.summary ? summaryHTML() : '') + networkHTML(site);
@@ -188,17 +248,21 @@
   function summaryHTML() { return '<div class="errsum" role="alert">' + ic('error', '', 20) + '<div><h3>' + S.summary.title + '</h3><ul>' + S.summary.items.map((i) => '<li>' + (i.k ? '<a href="#" data-goto="' + i.k + '">' + esc(fdef(i.k).l) + '</a>: ' : '') + esc(i.msg) + '</li>').join('') + '</ul></div></div>'; }
 
   function renderSite(site) {
+    normTab();
+    if (S.view === 'stage' && S.flash) { const ff = fdef(S.flash); if (ff) stOf(site).forEach((x) => { if (C.reqKeys(site.rt, x.id, site.v).has(S.flash)) S.stgOpen[x.id] = true; }); if (ff && ff.sec !== 'life' && ff.sec !== 'net' && !stOf(site).some((x) => C.reqKeys(site.rt, x.id, site.v).has(S.flash))) S.stgOpen._rest = true; }
     const cur = C.currentStage(site); const st = stOf(site); const v = S.editing ? S.draft : site.v;
+    const viewbar = '<div class="viewbar" role="radiogroup" aria-label="Page view (proposal)"><span class="viewbar__l">View <span class="badge badge--proposal">Proposal</span>' + qb({ screen: 'views' }) + '</span>' + VIEWS.map((x) => '<button role="radio" aria-checked="' + (S.view === x[0]) + '" class="viewbar__b' + (S.view === x[0] ? ' is-sel' : '') + '" data-view="' + x[0] + '">' + x[1] + '</button>').join('') + '<span class="viewbar__h">' + (S.view === 'standard' ? 'Faithful to the live CMCS page.' : S.view === 'compact' ? 'Denser rows, sections collapsed, fewer tabs.' : 'Sections grouped under lifecycle stages; current stage open.') + '</span></div>';
     const selStatus = stageStatus(site, S.stage);
     const path = '<div class="path"><ul class="path__nav">' + st.map((s) => { const status = stageStatus(site, s.id); return '<li class="path__item is-' + status + (s.id === S.stage ? ' is-selected' : '') + '"><button data-stage="' + s.id + '" title="' + esc(s.label) + '">' + (status === 'complete' ? ic('check', '', 12) : '') + esc(s.label) + '</button><span class="sel-mark"></span></li>'; }).join('') + '</ul></div>';
     const btn = selStatus === 'complete' ? '<button class="btn" data-reopen>Reopen this stage</button>' : '<button class="btn btn--brand" data-complete>' + ic('check', '', 12) + ' Mark Status as Complete</button>';
     const hl = (l, val) => '<div><dt>' + l + '</dt><dd>' + (val || '&nbsp;') + '</dd></div>';
-    return '<main class="page"><div class="crumb"><a href="#/sites">Sites</a> &rsaquo; ' + esc(site.v.code || '') + '</div>' +
+    return '<main class="page" data-view="' + S.view + '"><div class="crumb"><a href="#/sites">Sites</a> &rsaquo; ' + esc(site.v.code || '') + '</div>' +
       '<div class="hl"><div class="hl__top"><span class="objicon objicon--site" style="background:#e3447a">' + ic('building', '', 18) + '</span><div><div class="sub">Site</div><h1>' + esc(site.v.code) + '</h1></div><div class="hl__act">' +
       '<button class="btn" data-follow>' + (S.follow ? '✓ Following' : '+ Follow') + '</button><button class="btn" data-edit="">Edit</button><button class="btn" data-stub="New Maintenance Case">New Maintenance Case</button><button class="btn" data-stub="New Delegation">New Delegation</button><button class="btn" data-child-new="cert">New Certificate</button><button class="btn" data-stub="Log Session">Log Session</button><span class="relpos"><button class="btn" data-menu="rec" aria-label="More actions">' + ic('chevrondown', '', 12) + '</button>' + (S.menu === 'rec' ? '<div class="menu"><button data-delete="' + site.id + '">Delete</button></div>' : '') + '</span></div></div>' +
       '<dl class="hl__fields" style="margin-bottom:0">' + hl('Suburb', esc(site.v.suburb)) + hl('Status', esc(site.v.status)) + hl('Site Type', esc(site.v.siteType)) + hl('Directions Monitored', esc(site.v.dirMon)) + hl('Vendor', site.v.vendor ? '<a href="#" class="fe__link" onclick="return false">' + esc(site.v.vendor) + '</a>' : '') + '</dl></div>' +
+      attentionHTML(site) + viewbar +
       '<div class="layer"><div class="layer__h"><span class="badge badge--proposal">Proposed layer</span> Lifecycle Path: not on the live page today (Status is a plain field there). Record type <strong>' + site.rt + '</strong>, Activity <strong>' + esc(site.v.activity || '-') + '</strong>, ' + (cur ? 'current stage <strong>' + esc(cur.label) + '</strong>' : 'enforcement live') + qb({ journey: 'journey-order' }) + qb({ field: 'status' }) + '</div><div class="pathrow">' + path + btn + '</div></div>' +
-      '<div class="rec"><div class="card"><div class="tabs" role="tablist">' + TABS.map((t) => '<button class="' + (S.tab === t[0] ? 'is-active' : '') + '" data-tab="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' + tabBody(site) + '</div><div id="side">' + railHTML(site) + '</div></div>' +
+      '<div class="rec"><div class="card"><div class="tabs" role="tablist">' + (S.view === 'compact' ? CTABS : TABS).map((t) => '<button class="' + (S.tab === t[0] ? 'is-active' : '') + '" data-tab="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' + tabBody(site) + '</div><div id="side">' + railHTML(site) + '</div></div>' +
       (S.editing ? '<div class="foot-edit"><button class="btn" data-cancel>Cancel</button><button class="btn btn--brand" data-save>Save</button></div>' : '') + '</main>';
   }
   function render() {
@@ -318,7 +382,7 @@
   function moreInfo() { C.modal({ title: 'Please add Enforcement Device(s)', body: '<p>The live page shows this banner when a Site has no Enforcement Device. The validation rule behind it is not known. ' + qb({ banner: 'device' }) + '</p><p style="margin-top:8px"><strong>Assumption (Proposal):</strong> a Site needs one device per required type for its program: ' + D.DEVTYPES.FDSC.join(', ') + ' (FDSC), and similar for other programs. The lifecycle stage Camera Installed cannot be completed without them.</p>', footer: '<button class="btn" data-mclose2>Close</button>' }); $('[data-mclose2]').onclick = C.closeModal; }
 
   /* ---------- events ---------- */
-  const SEL = '[data-sf],[data-stage],[data-tab],[data-sec],[data-edit],[data-cancel],[data-save],[data-complete],[data-reopen],[data-upload],[data-rmfile],[data-goto],[data-delete],[data-sort],[data-stub],[data-follow],[data-menu],[data-open],[data-child-new],[data-child-edit],[data-child-del],[data-viewall],[data-moreinfo],[data-rtab],[data-lvbtn],#newBtn';
+  const SEL = '[data-view],[data-stg],[data-sf],[data-stage],[data-tab],[data-sec],[data-edit],[data-cancel],[data-save],[data-complete],[data-reopen],[data-upload],[data-rmfile],[data-goto],[data-delete],[data-sort],[data-stub],[data-follow],[data-menu],[data-open],[data-child-new],[data-child-edit],[data-child-del],[data-viewall],[data-moreinfo],[data-rtab],[data-lvbtn],#newBtn';
   document.addEventListener('click', (e) => {
     const t = e.target.closest(SEL);
     if (!t) { if (S.menu) { S.menu = null; render(); } return; }
@@ -331,6 +395,8 @@
     if (t.dataset.delete && S.route.name === 'list') { S.menu = null; return confirmDelete(byId(t.dataset.delete)); }
     const site = S.route.name === 'site' ? byId(S.route.id) : null; if (!site) return;
     S.menu = S.menu && !t.dataset.menu ? null : S.menu;
+    if (t.dataset.view) { setViewState(t.dataset.view); const h = location.hash.split('?'); const qs = new URLSearchParams(h[1] || ''); qs.set('view', t.dataset.view); history.replaceState(null, '', h[0] + '?' + qs.toString()); render(); return; }
+    if (t.dataset.stg) { const id = t.dataset.stg; const cur = S.stgOpen[id] !== undefined ? S.stgOpen[id] : id === S.stage; S.stgOpen[id] = !cur; render(); return; }
     if (t.dataset.sf !== undefined) { S.stageFilter = t.dataset.sf; render(); return; }
     if (t.dataset.stage) { S.stage = t.dataset.stage; S.tab = 'details'; S.summary = null; render(); const sc = $('#stagecard'); if (sc) sc.scrollIntoView({ block: 'nearest' }); }
     else if (t.dataset.tab) { S.tab = t.dataset.tab; render(); }

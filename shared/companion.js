@@ -17,7 +17,7 @@
     (at.field || []).forEach((k) => out.push(chip('Field: ' + (Core.fmap[k] || {}).l, BL.href({ t: 'record', rt: rt, stage: p.stage, field: k, q: q.id }, base))));
     (at.stage || []).forEach((s) => out.push(chip('Stage: ' + BL.STAGE_NAME[s], BL.href({ t: 'record', rt: rt, stage: s, q: q.id }, base))));
     (at.col || []).forEach((c) => out.push(chip('List column: ' + c, BL.href({ t: 'list', q: q.id }, base))));
-    (at.screen || []).forEach((c) => out.push(chip('Screen: ' + (c === 'new' ? 'New Site modal' : c === 'list' ? 'Sites list' : c), BL.href({ t: c === 'new' ? 'new' : 'list', q: q.id }, base))));
+    (at.screen || []).forEach((c) => { const rec = c === 'views' || c === 'attention' || c === 'ready'; out.push(chip('Screen: ' + (c === 'new' ? 'New Site modal' : c === 'list' ? 'Sites list' : c === 'views' ? 'Record page view switcher' : c === 'attention' ? 'Needs attention strip' : c === 'ready' ? 'Readiness panel' : c === 'nav' ? 'Stage navigator' : c), rec ? BL.href({ t: 'record', rt: 'RLSC', q: q.id }, base) : BL.href({ t: c === 'new' ? 'new' : 'list', q: q.id }, base))); });
     (at.sec || []).forEach((c) => out.push(chip('Section: ' + c, BL.href({ t: 'record', rt: rt, q: q.id }, base))));
     (at.child || []).forEach((c) => out.push(chip('Related list: ' + c, BL.href({ t: 'record', rt: rt, id: 's1', q: q.id }, base))));
     (at.banner || []).forEach((c) => out.push(chip('Banner: add ' + c, BL.href({ t: 'record', rt: 'RLSC', id: 's3', q: q.id }, base))));
